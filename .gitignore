@@ -1,0 +1,24 @@
+# Yedek arşivleri yerel dursun (büyük, repo'ya gerek yok)
+yedekler/
+
+# Ham txt çıktıları yerel dursun — uygulama Parquet'i okuyor, ham gerekmez
+# (Reproducibility istenirse README'de yeniden üretme talimatı var)
+veri/ham/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# macOS / editör
+.DS_Store
+.vscode/
+.idea/
+
+# Streamlit
+.streamlit/secrets.toml
+
+# editör cruft
+.Rhistory

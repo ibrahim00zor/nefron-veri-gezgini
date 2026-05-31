@@ -22,3 +22,6 @@ venv/
 
 # editör cruft
 .Rhistory
+
+# Kişisel günlük — public repo'da paylaşılmaz, sadece lokal düzen için
+notlar/gunluk.md

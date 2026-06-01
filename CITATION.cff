@@ -11,6 +11,11 @@ repository-code: "https://github.com/ibrahim00zor/nefron-veri-gezgini"
 license: MIT
 license-url: "https://github.com/ibrahim00zor/nefron-veri-gezgini/blob/main/LICENSE"
 year: 2026
+doi: "10.5281/zenodo.20489610"
+identifiers:
+  - type: doi
+    value: "10.5281/zenodo.20489610"
+    description: "Concept DOI (always points to latest version)"
 abstract: >
   Interactive web tool for exploring the Layton/Hu human nephron mathematical
   model. Built with Streamlit, DuckDB and Plotly. Provides multi-scenario

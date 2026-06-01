@@ -1,8 +1,15 @@
-# Nefron Projesi
+# Nefron Veri Gezgini
+
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20489610.svg)](https://doi.org/10.5281/zenodo.20489610)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![License: CC BY 4.0](https://img.shields.io/badge/Content-CC%20BY%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by/4.0/)
+[![Streamlit App](https://img.shields.io/badge/Live-Streamlit%20App-FF4B4B?logo=streamlit&logoColor=white)](https://nefron-veri-gezgini.streamlit.app)
 
 İnsan nefronu epitelyal transport modelinin (Layton/Hu) çıktılarını, doktorlar ve
 araştırmacılar için **atıf yapılabilir, interaktif bir bilim/görselleştirme aracına**
 dönüştürme projesi.
+
+**📌 Atıf:** Zor, İ. (2026). *Nefron Veri Gezgini.* Zenodo. https://doi.org/10.5281/zenodo.20489610
 
 > Bu klasör senin "ana üssün". Kafan karışınca buraya dön — her şeyin yeri burada yazılı.
 

@@ -63,6 +63,16 @@ SEG_ORDER_JUX = ["PT", "S3", "SDL", "LDL", "LAL", "mTAL", "cTAL", "DCT", "CNT", 
 NEPHRONS = ["sup", "jux1", "jux2", "jux3", "jux4", "jux5", "merged"]
 CD_SEGMENTS = {"CCD", "OMCD", "IMCD"}
 
+# Senaryo etiketleri — insan-okunabilir görünüm
+SENARYO_AD = {
+    "F_normal":   "👩 Sağlıklı kadın (baseline)",
+    "M_normal":   "👨 Sağlıklı erkek (baseline)",
+    "F_diab_mod": "👩 + Diyabet (orta)",
+    "F_HT":       "👩 + Hipertansiyon",
+    "F_SGLT2":    "👩 + SGLT2 inhibitörü (gliflozin)",
+    "M_SGLT2":    "👨 + SGLT2 inhibitörü (gliflozin)",
+}
+
 # Eski SEG_INFO dict kaldırıldı — içerik artık kod/egitim_icerigi.py'de
 # (yapılandırılmış, kullanıcının kendi cümlelerini doldurabileceği biçimde)
 
@@ -148,6 +158,19 @@ with st.sidebar:
     st.markdown("### Nefron Veri Gezgini")
     st.caption("Layton/Hu insan nefron modeli üzerine inşa edilmiş interaktif veri arayüzü.")
 
+    # === SENARYO SEÇİCİ ===
+    senaryolar_listesi = q(f"SELECT DISTINCT condition FROM {DB} ORDER BY condition")["condition"].tolist()
+    senaryo = st.selectbox(
+        "🧪 Aktif senaryo",
+        senaryolar_listesi,
+        format_func=lambda s: SENARYO_AD.get(s, s),
+        index=senaryolar_listesi.index("F_normal") if "F_normal" in senaryolar_listesi else 0,
+        key="senaryo_secimi",
+        help="Tüm grafikler ve doğrulamalar bu senaryo için filtrelenir.",
+    )
+    st.caption(f"📋 Senaryo kodu: `{senaryo}` — bu seçim tüm sekmelerde aktif.")
+    st.markdown("---")
+
     st.warning(
         "**Doğrulanmamış: `flux` (taşıyıcı akı) verisi**\n\n"
         "CCD'deki bazı taşıyıcılar (AE1, HATPase, HKATPase) birden çok hücre tipi "
@@ -220,10 +243,10 @@ with tab_segment:
     comps = ["Lumen", "Bath"] if show_bath else ["Lumen"]
     df = q(
         f"""SELECT position, value, compartment FROM {DB}
-            WHERE variable='con' AND solute=? AND segment=? AND nephron=?
+            WHERE condition=? AND variable='con' AND solute=? AND segment=? AND nephron=?
                   AND compartment IN ({','.join(['?']*len(comps))})
             ORDER BY position""",
-        [solute, segment, nephron, *comps],
+        [senaryo, solute, segment, nephron, *comps],
     )
 
     if df.empty:
@@ -250,10 +273,10 @@ with tab_segment:
         if len(lumen_df) >= 2:
             vol_df = q(
                 f"""SELECT position, value FROM {DB}
-                    WHERE variable='water_volume' AND segment=? AND nephron=?
+                    WHERE condition=? AND variable='water_volume' AND segment=? AND nephron=?
                           AND compartment='Lumen'
                     ORDER BY position""",
-                [segment, nephron],
+                [senaryo, segment, nephron],
             )
             if len(vol_df) >= 2:
                 yorum = yorumla(
@@ -297,9 +320,9 @@ with tab_full:
         eff = neph_for(seg, nephron)
         d = q(
             f"""SELECT position, value FROM {DB}
-                WHERE variable='con' AND solute=? AND segment=? AND compartment=? AND nephron=?
+                WHERE condition=? AND variable='con' AND solute=? AND segment=? AND compartment=? AND nephron=?
                 ORDER BY position""",
-            [solute, seg, compartment, eff],
+            [senaryo, solute, seg, compartment, eff],
         )
         if d.empty: continue
         parts.append(d.assign(x=i + d["position"], segment=seg))
@@ -344,10 +367,10 @@ with tab_neph:
 
     df = q(
         f"""SELECT position, value, nephron FROM {DB}
-            WHERE variable='con' AND solute=? AND segment=? AND compartment=?
+            WHERE condition=? AND variable='con' AND solute=? AND segment=? AND compartment=?
                   AND nephron IN ('sup','jux1','jux2','jux3','jux4','jux5')
             ORDER BY nephron, position""",
-        [solute, segment, compartment],
+        [senaryo, solute, segment, compartment],
     )
 
     if df.empty:
@@ -378,8 +401,14 @@ with tab_verify:
     st.caption("Veri açıldığında ders kitabı beklentileri otomatik test edilir.")
 
     def scalar(sql, params=None):
+        # Otomatik condition filtresi (seçili senaryoyu zorunlu kılar)
+        if "condition=" not in sql:
+            sql = sql.replace("WHERE ", f"WHERE condition='{senaryo}' AND ", 1)
         r = q(sql, params or [])
         return None if r.empty else float(r["value"].iloc[0])
+
+    st.caption(f"_Doğrulamalar **{SENARYO_AD.get(senaryo, senaryo)}** senaryosu için yapılıyor. "
+               f"Bazı kontroller hastalık/ilaç senaryosunda farklı sonuç verebilir — bu **bilgi**, hata değil._")
 
     checks = []
     add = checks.append
@@ -451,7 +480,7 @@ with tab_verify:
     m1, m2, m3 = st.columns(3)
     m1.metric("Geçen", f"{passed} / {total}")
     m2.metric("Başarı", f"{pct:.0f} %")
-    m3.metric("Veri sürümü", "female_hum_normal")
+    m3.metric("Senaryo", senaryo)
 
     st.markdown("---")
     # Kontroller 2 sutunlu kart gridi

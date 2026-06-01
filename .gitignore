@@ -4,6 +4,7 @@ yedekler/
 # Ham txt çıktıları yerel dursun — uygulama Parquet'i okuyor, ham gerekmez
 # (Reproducibility istenirse README'de yeniden üretme talimatı var)
 veri/ham/
+veri/ham_scenarios/
 
 # Python
 __pycache__/

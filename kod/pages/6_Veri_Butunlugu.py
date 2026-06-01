@@ -3,10 +3,10 @@ import os
 import streamlit as st
 from ui_kit import setup_page, render_sidebar, q, DB, PARQUET
 
-setup_page("Veri Bütünlüğü", "📊")
+setup_page("Veri Bütünlüğü")
 senaryo = render_sidebar()
 
-st.markdown("## 📊 Veri Bütünlüğü Paneli")
+st.markdown("## Veri Bütünlüğü Paneli")
 st.caption(f"Kaynak: `{os.path.basename(PARQUET)}` · "
            f"Tüm senaryolar tek tidy Parquet'te birleşik tutuluyor.")
 

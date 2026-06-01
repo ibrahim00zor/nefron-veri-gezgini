@@ -8,10 +8,10 @@ from ui_kit import (
     secenekler, senaryo_listesi, SENARYO_AD, NEPHRONS,
 )
 
-setup_page("Karşılaştırma", "🔀")
+setup_page("Karşılaştırma")
 senaryo_aktif = render_sidebar()  # sidebar yine aktif kalır ama bu sayfa tüm senaryolarda
 
-st.markdown("## 🔀 Senaryo Karşılaştırma")
+st.markdown("## Senaryo Karşılaştırma")
 st.caption("2–4 senaryoyu üst üste seç, aynı grafikte gör. "
            "Bu sekme **6 senaryolu kütüphanenin asıl gücünü** ortaya çıkarır — "
            "diyabette mTAL nasıl değişir, SGLT2 hangi etkiyi geri çevirir, vb.")
@@ -86,7 +86,7 @@ cite_footer()
 # ============================================================
 #  Fark tablosu — her senaryo icin giris/cikis ve referansa gore fark
 # ============================================================
-st.markdown("### 📊 Senaryolar arası farklar")
+st.markdown("### Senaryolar arası farklar")
 
 ozet = (df.groupby("condition")
           .agg(giris=("value", "first"),
@@ -112,7 +112,7 @@ if len(ozet) >= 2 and "referansa_göre_%" in ozet.columns:
     if en_buyuk and en_buyuk != ref:
         oran = ozet.loc[en_buyuk, "referansa_göre_%"]
         st.info(
-            f"📌 **Gözlem:** `{ref}` referans alındığında, **`{en_buyuk}`** "
+            f"**Gözlem:** `{ref}` referans alındığında, **`{en_buyuk}`** "
             f"({SENARYO_AD.get(en_buyuk, en_buyuk)}) en büyük sapmaya sahip — "
             f"`{segment}` segmenti çıkışında **{solute} %{oran:+.1f}** farklı. "
             f"Bu pertürbasyonun bu segmente etkisi belirgindir."
@@ -120,7 +120,7 @@ if len(ozet) >= 2 and "referansa_göre_%" in ozet.columns:
 
 # CSV indir
 st.download_button(
-    "📥 Bu karşılaştırma verisini CSV indir",
+    "Bu karşılaştırma verisini CSV indir",
     df.to_csv(index=False).encode("utf-8"),
     file_name=f"karsilastirma_{'_vs_'.join(secilenler)}_{segment}_{solute}.csv",
     mime="text/csv",

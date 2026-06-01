@@ -7,10 +7,10 @@ from ui_kit import (
 from egitim_icerigi import segment_info, atif_kisa
 from yorum_motoru import yorumla
 
-setup_page("Segment Profili", "🔬")
+setup_page("Segment Profili")
 senaryo = render_sidebar()
 
-st.markdown("## 🔬 Segment Profili")
+st.markdown("## Segment Profili")
 st.caption("Tek segmentte tek solütün pozisyon boyunca değişimi. Lumen + Bath bindirilebilir; "
            "her grafiğin altında otomatik kütle/hacim yorumu görünür.")
 
@@ -69,12 +69,12 @@ else:
                 vol_cikis=float(vol_df["value"].iloc[-1]),
                 solut=solute,
             )
-            st.info(f"🔬 **Otomatik fizyolojik yorum:** {yorum}")
+            st.info(f"**Otomatik fizyolojik yorum:** {yorum}")
 
     cite_footer()
 
     # Eğitim içeriği expander
-    with st.expander(f"📚 {segment} hakkında — bilgi & atıf"):
+    with st.expander(f"{segment} hakkında — bilgi ve atıf"):
         seg = segment_info(segment)
         if seg:
             st.markdown(f"#### {seg.get('tam_ad', segment)}")
@@ -84,7 +84,7 @@ else:
             else:
                 st.caption("_Özet henüz yazılmadı — `kod/egitim_icerigi.py` içinden doldurulacak._")
             if seg.get("not"):
-                st.info(f"💡 {seg['not']}")
+                st.info(f"Not: {seg['not']}")
             a, b = st.columns(2)
             with a:
                 st.markdown("**Apikal (lümen)**")
@@ -95,9 +95,9 @@ else:
                 for t in seg.get("bazolateral", []) or ["—"]:
                     st.markdown(f"- {t}")
             sayfa = seg.get("kaynak_sayfa") or "?"
-            st.caption(f"📖 Kaynak: {atif_kisa(seg.get('kaynak_anahtar','turkmen2024'), sayfa)}")
+            st.caption(f"Kaynak: {atif_kisa(seg.get('kaynak_anahtar','turkmen2024'), sayfa)}")
 
-    with st.expander("📥 CSV indir / özet"):
+    with st.expander("CSV indir ve özet tablo"):
         ozet = df.groupby("compartment")["value"].agg(["min", "max", "mean"]).round(3)
         st.dataframe(ozet)
         st.download_button("CSV indir", df.to_csv(index=False).encode("utf-8"),

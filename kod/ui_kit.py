@@ -28,12 +28,12 @@ NEPHRONS = ["sup", "jux1", "jux2", "jux3", "jux4", "jux5", "merged"]
 CD_SEGMENTS = {"CCD", "OMCD", "IMCD"}
 
 SENARYO_AD = {
-    "F_normal":   "👩 Sağlıklı kadın (baseline)",
-    "M_normal":   "👨 Sağlıklı erkek (baseline)",
-    "F_diab_mod": "👩 + Diyabet (orta)",
-    "F_HT":       "👩 + Hipertansiyon",
-    "F_SGLT2":    "👩 + SGLT2 inhibitörü",
-    "M_SGLT2":    "👨 + SGLT2 inhibitörü",
+    "F_normal":   "♀ Sağlıklı kadın (baseline)",
+    "M_normal":   "♂ Sağlıklı erkek (baseline)",
+    "F_diab_mod": "♀ + Diyabet (orta)",
+    "F_HT":       "♀ + Hipertansiyon",
+    "F_SGLT2":    "♀ + SGLT2 inhibitörü",
+    "M_SGLT2":    "♂ + SGLT2 inhibitörü",
 }
 SENARYO_DETAY = {
     "F_normal":   "Sağlıklı yetişkin kadın, normal hidrasyon. **Tüm karşılaştırmaların referansı.**",
@@ -127,8 +127,8 @@ def senaryo_listesi():
 def render_sidebar():
     senaryolar = senaryo_listesi()
     with st.sidebar:
-        st.markdown("### 🧪 Nefron Veri Gezgini")
-        st.caption("Layton/Hu modeli · interaktif veri arayüzü")
+        st.markdown("### Nefron Veri Gezgini")
+        st.caption("Layton/Hu modeli — interaktif veri arayüzü")
 
         senaryo = st.selectbox(
             "Aktif senaryo",
@@ -165,7 +165,7 @@ def render_sidebar():
         )
 
         st.markdown("---")
-        with st.expander("📖 Veri kaynağı & atıf"):
+        with st.expander("Veri kaynağı & atıf"):
             st.markdown(
                 "**Model:** Layton/Hu (`mstadt/nephron`)\n\n"
                 "**Atıf:** Hu R., et al. (2021). *Sex differences in solute and water "
@@ -174,7 +174,7 @@ def render_sidebar():
                 "**Bu proje:** Zor, İ. (2026). *Nefron Veri Gezgini.* Zenodo. "
                 "[doi:10.5281/zenodo.20489610](https://doi.org/10.5281/zenodo.20489610)"
             )
-        with st.expander("📐 Birimler"):
+        with st.expander("Birimler"):
             st.markdown(
                 "Konsantrasyon: **mM** · Akı: **pmol/min** · Hacim: **nl/min** · "
                 "Ozmolalite: **mOsm** · Potansiyel: **mV**"
@@ -206,10 +206,10 @@ def chart_yap(df, x, y, color, title, xlab, ylab, color_label="Seri",
 def cite_footer():
     st.markdown(
         "<div class='cite-footer'>"
-        "📖 <b>Kaynak:</b> Hu et al. 2021 (iScience) · "
+        "<b>Kaynak:</b> Hu et al. 2021, <i>iScience</i> 24:102694 &nbsp;·&nbsp; "
         "<b>Bu araç:</b> Zor 2026, "
-        "<a href='https://doi.org/10.5281/zenodo.20489610' target='_blank'>"
-        "doi:10.5281/zenodo.20489610</a> · "
+        "<a href='https://doi.org/10.5281/zenodo.20489610' target='_blank' "
+        "style='color:#1e40af;text-decoration:none;'>doi:10.5281/zenodo.20489610</a> &nbsp;·&nbsp; "
         "<b>Birimler:</b> konsantrasyon mM, hacim nl/min, ozmolalite mOsm"
         "</div>",
         unsafe_allow_html=True,

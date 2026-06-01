@@ -6,10 +6,10 @@ from ui_kit import (
     secenekler, SEG_ORDER_SUP, SEG_ORDER_JUX,
 )
 
-setup_page("Tüm Nefron", "🧭")
+setup_page("Tüm Nefron")
 senaryo = render_sidebar()
 
-st.markdown("## 🧭 Tüm Nefron Boyunca")
+st.markdown("## Tüm Nefron Boyunca")
 st.caption("Segmentler fizyolojik sırada yan yana çizilir. Dikey kesik çizgiler segment sınırlarıdır. "
            "Toplayıcı kanal (CCD/OMCD/IMCD) otomatik 'merged' nefron altında.")
 

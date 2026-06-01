@@ -2,10 +2,10 @@
 import streamlit as st
 from ui_kit import setup_page, render_sidebar, DB, scalar, SENARYO_AD
 
-setup_page("Doğrulamalar", "✅")
+setup_page("Doğrulamalar")
 senaryo = render_sidebar()
 
-st.markdown("## ✅ Otomatik Fizyoloji Doğrulamaları")
+st.markdown("## Otomatik Fizyoloji Doğrulamaları")
 st.caption(f"Aktif senaryo: **{SENARYO_AD.get(senaryo, senaryo)}**. "
            f"Bazı kontroller hastalık/ilaç senaryosunda farklı sonuç verebilir — "
            f"bu **bilgi**, hata değil.")

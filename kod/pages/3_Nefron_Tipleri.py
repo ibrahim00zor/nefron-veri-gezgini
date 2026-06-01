@@ -6,10 +6,10 @@ from ui_kit import (
 )
 from egitim_icerigi import segment_info, atif_kisa
 
-setup_page("Nefron Tipleri", "📐")
+setup_page("Nefron Tipleri")
 senaryo = render_sidebar()
 
-st.markdown("## 📐 Nefron Tiplerini Karşılaştır")
+st.markdown("## Nefron Tiplerini Karşılaştır")
 st.caption("Aynı segment + solüt + kompartman için sup ve jux1–5 üst üste çizilir. "
            "Derin nefronlar (jux5) medullaya en çok inenler — gradyan onlardan dogar.")
 
@@ -45,13 +45,13 @@ else:
     st.plotly_chart(fig, use_container_width=True)
     cite_footer()
 
-    with st.expander(f"📚 {segment} hakkında — bilgi & atıf"):
+    with st.expander(f"{segment} hakkında — bilgi ve atıf"):
         seg = segment_info(segment)
         if seg:
             st.markdown(f"#### {seg.get('tam_ad', segment)}")
             if seg.get("ozet"):
                 st.markdown(seg["ozet"])
             if seg.get("not"):
-                st.info(f"💡 {seg['not']}")
+                st.info(f"Not: {seg['not']}")
             sayfa = seg.get("kaynak_sayfa") or "?"
-            st.caption(f"📖 Kaynak: {atif_kisa(seg.get('kaynak_anahtar','turkmen2024'), sayfa)}")
+            st.caption(f"Kaynak: {atif_kisa(seg.get('kaynak_anahtar','turkmen2024'), sayfa)}")

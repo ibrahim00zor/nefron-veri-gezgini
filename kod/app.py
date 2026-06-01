@@ -3,11 +3,17 @@ app.py — Nefron Veri Gezgini (profesyonel surum v2)
 Calistir:  cd ~/Desktop/Nefron-Projesi && streamlit run kod/app.py
 """
 import os
+import sys
 import duckdb
 import pandas as pd
 import streamlit as st
 import plotly.express as px
 import plotly.io as pio
+
+# Kendi modüllerimiz (kod/ klasöründen)
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from egitim_icerigi import segment_info, atif_kisa, atif_tam, ATIFLAR
+from yorum_motoru import yorumla
 
 # ============================================================
 #  Sayfa kurulumu + tema
@@ -57,20 +63,47 @@ SEG_ORDER_JUX = ["PT", "S3", "SDL", "LDL", "LAL", "mTAL", "cTAL", "DCT", "CNT", 
 NEPHRONS = ["sup", "jux1", "jux2", "jux3", "jux4", "jux5", "merged"]
 CD_SEGMENTS = {"CCD", "OMCD", "IMCD"}
 
-SEG_INFO = {
-    "PT":   "Proksimal kıvrımlı tübül — izoozmotik bulk reabsorpsiyon (~%67). NHE3, SGLT2, Na/K-ATPaz.",
-    "S3":   "Proksimal düz tübül (pars recta). PT'nin devamı.",
-    "SDL":  "Kısa inen ince kol — su geçirgen (AQP1); klasik 'su çıkar, solüt yoğunlaşır'.",
-    "LDL":  "Uzun inen ince kol (yalnız jux). Urea-permeabl + Na transselüler kapalı + paraselüler konvektif Na kaçağı. Su lümene GİRER (urea-su tuzağı).",
-    "LAL":  "Uzun çıkan ince kol (yalnız jux). NaCl pasif geri emilim.",
-    "mTAL": "Medüller kalın çıkan kol — NKCC2 (loop diüretik hedefi). Dilüsyon segmenti, su geçirmez.",
-    "cTAL": "Kortikal kalın çıkan kol — NKCC2 devam. Sonunda makula densa.",
-    "DCT":  "Distal kıvrımlı tübül — NCC (tiyazid hedefi).",
-    "CNT":  "Bağlantı tübülü — ENaC başlar (aldosteron hedefi). Çok hücre tipli.",
-    "CCD":  "Kortikal toplayıcı kanal — ENaC, AQP2 (ADH), A/B tipi ara hücreler (asit-baz).",
-    "OMCD": "Dış medüller toplayıcı kanal.",
-    "IMCD": "İç medüller toplayıcı kanal — üre geri emilim (gradyana katkı), final konsantrasyon.",
-}
+# Eski SEG_INFO dict kaldırıldı — içerik artık kod/egitim_icerigi.py'de
+# (yapılandırılmış, kullanıcının kendi cümlelerini doldurabileceği biçimde)
+
+
+def render_segment_info(segment_kod):
+    """Bir segmentin tüm eğitim içeriğini Streamlit'te gösterir."""
+    seg = segment_info(segment_kod)
+    if not seg:
+        st.caption("_Bu segment için içerik henüz tanımlanmadı._")
+        return
+    st.markdown(f"### {seg.get('tam_ad', segment_kod)}")
+    ozet = seg.get("ozet", "").strip()
+    if ozet:
+        st.markdown(ozet)
+    else:
+        st.caption("_Özet henüz yazılmadı — `kod/egitim_icerigi.py` içinden doldurulacak "
+                   "(kendi cümlelerinle, Türkmen 2024'ten paraphrase)._")
+    if seg.get("not"):
+        st.info(f"💡 {seg['not']}")
+
+    c1, c2 = st.columns(2)
+    with c1:
+        st.markdown("**Apikal (lümen tarafı)**")
+        items = seg.get("apikal", [])
+        if items:
+            for t in items:
+                st.markdown(f"- {t}")
+        else:
+            st.caption("—")
+    with c2:
+        st.markdown("**Bazolateral (kan tarafı)**")
+        items = seg.get("bazolateral", [])
+        if items:
+            for t in items:
+                st.markdown(f"- {t}")
+        else:
+            st.caption("—")
+
+    sayfa = seg.get("kaynak_sayfa") or "?"
+    anahtar = seg.get("kaynak_anahtar", "turkmen2024")
+    st.caption(f"📖 Kaynak: {atif_kisa(anahtar, sayfa)}")
 
 # ============================================================
 #  Sorgu yardimcilari
@@ -212,10 +245,35 @@ with tab_segment:
                         f"{solute} (mM)", color_label="Kompartman")
         st.plotly_chart(fig, use_container_width=True)
 
-        with st.expander(f"Bu segment hakkında — {segment}"):
-            st.markdown(SEG_INFO.get(segment, "Bilgi notu eklenmedi."))
+        # --- Otomatik fizyolojik yorum (kütle vs hacim analizi) ---
+        lumen_df = df[df["compartment"] == "Lumen"].sort_values("position")
+        if len(lumen_df) >= 2:
+            vol_df = q(
+                f"""SELECT position, value FROM {DB}
+                    WHERE variable='water_volume' AND segment=? AND nephron=?
+                          AND compartment='Lumen'
+                    ORDER BY position""",
+                [segment, nephron],
+            )
+            if len(vol_df) >= 2:
+                yorum = yorumla(
+                    con_giris=float(lumen_df["value"].iloc[0]),
+                    con_cikis=float(lumen_df["value"].iloc[-1]),
+                    vol_giris=float(vol_df["value"].iloc[0]),
+                    vol_cikis=float(vol_df["value"].iloc[-1]),
+                    solut=solute,
+                )
+                st.info(f"🔬 **Otomatik fizyolojik yorum:** {yorum}")
+                st.caption(
+                    "_Bu yorum, konsantrasyon = kütle / hacim ilişkisinden hesaplanır. "
+                    "LDL'deki gibi sezgi-aksi durumları yakalar._"
+                )
 
-        with st.expander("Veriyi indir / özet tablo"):
+        # --- Eğitim içeriği expander ---
+        with st.expander(f"📚 Bu segment hakkında — {segment}", expanded=False):
+            render_segment_info(segment)
+
+        with st.expander("📥 Veriyi indir / özet tablo"):
             ozet = df.groupby("compartment")["value"].agg(["min", "max", "mean"]).round(3)
             st.dataframe(ozet, use_container_width=False)
             st.download_button("CSV indir", df.to_csv(index=False).encode("utf-8"),
@@ -309,8 +367,8 @@ with tab_neph:
         fig.update_traces(line=dict(width=2.5))
         st.plotly_chart(fig, use_container_width=True)
 
-        with st.expander(f"Bu segment hakkında — {segment}"):
-            st.markdown(SEG_INFO.get(segment, ""))
+        with st.expander(f"📚 Bu segment hakkında — {segment}"):
+            render_segment_info(segment)
 
 # ============================================================
 #  SEKME 4: Dogrulamalar

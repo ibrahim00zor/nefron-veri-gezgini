@@ -115,6 +115,14 @@ with st.sidebar:
     st.markdown("### Nefron Veri Gezgini")
     st.caption("Layton/Hu insan nefron modeli üzerine inşa edilmiş interaktif veri arayüzü.")
 
+    st.warning(
+        "**Doğrulanmamış: `flux` (taşıyıcı akı) verisi**\n\n"
+        "CCD'deki bazı taşıyıcılar (AE1, HATPase, HKATPase) birden çok hücre tipi "
+        "membranı barındırır; bu dosyalar tek profil olarak yorumlanıyor → pozisyon "
+        "ekseninde yanlış görüntülenebilir. Düzeltilene dek `flux` çıktılarını "
+        "**doğrulama referansı olarak kullanma.** Detay: `Veri Bütünlüğü` sekmesi."
+    )
+
     sb = saglik_metrikleri()
     c1, c2 = st.columns(2)
     c1.metric("Satır", f"{sb['satir']:,}")

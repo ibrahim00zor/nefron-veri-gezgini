@@ -73,6 +73,16 @@ SENARYO_AD = {
     "M_SGLT2":    "👨 + SGLT2 inhibitörü (gliflozin)",
 }
 
+# Senaryo açıklamaları — yan panelde gösterilir
+SENARYO_DETAY = {
+    "F_normal":   "Sağlıklı yetişkin kadın, normal hidrasyon. **Tüm karşılaştırmaların referansı.**",
+    "M_normal":   "Sağlıklı yetişkin erkek. Cinsiyet farkı analizleri için referans.",
+    "F_diab_mod": "Orta dereceli diyabet. PT'de glukoz yükü artar, tubuloglomerüler geri besleme bozulur.",
+    "F_HT":       "Hipertansiyon. Tubuler basınç ve renal kan akımı baseline'dan sapar.",
+    "F_SGLT2":    "Gliflozin (SGLT2 inhibitörü). PT'de glukoz geri emilimi bloke; natriürez beklenir.",
+    "M_SGLT2":    "Gliflozin, erkek. F_SGLT2 ile cinsiyet × ilaç etkileşimi karşılaştırması.",
+}
+
 # Eski SEG_INFO dict kaldırıldı — içerik artık kod/egitim_icerigi.py'de
 # (yapılandırılmış, kullanıcının kendi cümlelerini doldurabileceği biçimde)
 
@@ -168,7 +178,11 @@ with st.sidebar:
         key="senaryo_secimi",
         help="Tüm grafikler ve doğrulamalar bu senaryo için filtrelenir.",
     )
-    st.caption(f"📋 Senaryo kodu: `{senaryo}` — bu seçim tüm sekmelerde aktif.")
+    detay = SENARYO_DETAY.get(senaryo, "")
+    if detay:
+        st.markdown(f"<div style='background:#eff6ff;border:1px solid #bfdbfe;padding:8px 12px;border-radius:6px;font-size:0.85rem;color:#1e3a8a;'>{detay}</div>",
+                    unsafe_allow_html=True)
+    st.caption(f"Kod: `{senaryo}` · {len(senaryolar_listesi)} senaryolu kütüphaneden")
     st.markdown("---")
 
     st.warning(
@@ -180,11 +194,16 @@ with st.sidebar:
     )
 
     sb = saglik_metrikleri()
+    n_senaryo = len(senaryolar_listesi)
+    bu_satir = sb['satir'] // n_senaryo if n_senaryo else sb['satir']
     c1, c2 = st.columns(2)
-    c1.metric("Satır", f"{sb['satir']:,}")
-    c2.metric("Değişken", f"{sb['degisken']}")
-    c1.metric("Segment", f"{sb['segment']}")
-    c2.metric("Nefron tipi", f"{sb['nefron']}")
+    c1.metric("Bu senaryo", f"{bu_satir:,} satır")
+    c2.metric("Kütüphane", f"{n_senaryo} senaryo")
+    st.caption(
+        f"Model yapısı (her senaryoda sabit): **{sb['segment']}** segment · "
+        f"**{sb['solut']}** solüt · **{sb['nefron']}** nefron tipi · "
+        f"**{sb['degisken']}** değişken kategorisi"
+    )
 
     st.markdown("---")
     with st.expander("Veri kaynağı"):

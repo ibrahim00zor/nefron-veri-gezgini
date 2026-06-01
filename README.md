@@ -71,6 +71,31 @@ python3 -c "import duckdb; print(duckdb.sql(\"SELECT DISTINCT segment FROM 'veri
 
 ---
 
+## Lisans
+
+İkili lisanslama (akademik standart — PLOS, eLife, NIH gibi):
+
+- **Kod** (`kod/` içindekiler) → [**MIT License**](LICENSE)
+  - Kullan, değiştir, dağıt, ticari kullan — atıf'la
+- **İçerik / veri / figürler** (`notlar/`, `veri/*.parquet`, ekran görüntüleri) →
+  [**Creative Commons Attribution 4.0 (CC-BY 4.0)**](LICENSE-CONTENT)
+  - Paylaş, uyarla, ticari kullan — atıf'la
+
+## Atıf (Citation)
+
+Bu projeyi akademik çalışmada kullanıyorsan, [`CITATION.cff`](CITATION.cff) dosyasındaki
+formatı kullan. Kısa biçim:
+
+> Zor, İ. (2026). *Nefron Veri Gezgini* (Computer software).
+> https://github.com/ibrahim00zor/nefron-veri-gezgini
+
+**Önemli:** Bu projenin verisi Hu et al. 2021 modelinden türetilmiştir. Verimize atıf
+yaparken **orijinal makaleyi de** referans göster:
+
+> Hu, R., et al. (2021). *Sex differences in solute and water handling in the
+> human kidney.* iScience 24(6):102694.
+> https://doi.org/10.1016/j.isci.2021.102694
+
 ## Mevcut durum
 
 - [x] Model bulundu, kuruldu, çalıştı (sup + jux1-5 + merged)

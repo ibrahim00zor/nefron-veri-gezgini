@@ -1,0 +1,57 @@
+cff-version: 1.2.0
+title: "Nefron Veri Gezgini"
+message: "If you use this software or data, please cite it as below."
+type: software
+authors:
+  - family-names: "Zor"
+    given-names: "İbrahim"
+    alias: "ibrahim00zor"
+url: "https://github.com/ibrahim00zor/nefron-veri-gezgini"
+repository-code: "https://github.com/ibrahim00zor/nefron-veri-gezgini"
+license: MIT
+license-url: "https://github.com/ibrahim00zor/nefron-veri-gezgini/blob/main/LICENSE"
+year: 2026
+abstract: >
+  Interactive web tool for exploring the Layton/Hu human nephron mathematical
+  model. Built with Streamlit, DuckDB and Plotly. Provides multi-scenario
+  comparison (baseline, sex differences, diabetes, hypertension, SGLT2
+  inhibition), automatic mass/volume interpretation of concentration changes,
+  and an educational layer with citation-attributed content.
+keywords:
+  - "nephron"
+  - "renal physiology"
+  - "mathematical modeling"
+  - "Layton model"
+  - "interactive visualization"
+  - "Streamlit"
+references:
+  - type: article
+    title: "Sex differences in solute and water handling in the human kidney: Modeling and functional implications"
+    authors:
+      - family-names: "Hu"
+        given-names: "Rui"
+      - family-names: "Layton"
+        given-names: "Anita T."
+    year: 2021
+    journal: "iScience"
+    volume: 24
+    issue: 6
+    doi: "10.1016/j.isci.2021.102694"
+  - type: software
+    title: "nephron (mathematical model implementation)"
+    authors:
+      - family-names: "Stadt"
+        given-names: "Melissa"
+      - family-names: "Layton"
+        given-names: "Anita T."
+    url: "https://github.com/mstadt/nephron"
+  - type: book
+    title: "İnsan Fizyolojisinin Temel Kuramları – Boşaltım, Dişi-Erkek Üreme ve Gebelik Fizyolojisi"
+    authors:
+      - family-names: "Türkmen"
+        given-names: "Kültigin"
+    year: 2024
+    edition: 1
+    publisher: "Dizgi Ofset"
+    address: "Konya, Turkey"
+    isbn: "978-625-99451-0-1"

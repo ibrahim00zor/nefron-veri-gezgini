@@ -121,6 +121,43 @@ def saglik_metrikleri():
 def senaryo_listesi():
     return q(f"SELECT DISTINCT condition FROM {DB} ORDER BY condition")["condition"].tolist()
 
+# Fiziksel olarak negatif olamayan degiskenler (yakinsama hatasi tespiti icin)
+NONNEG_VARS = {"con", "osmolality", "water_volume"}
+
+@st.cache_data
+def butunluk_haritasi():
+    """Hangi (senaryo -> segment kumesi) sayisal olarak yakinsamadi?
+    Gosterge: NaN deger veya negatif Lumen osmolalitesi (solut toplami negatif olamaz).
+    Modelin Newton cozucusu bazi senaryolarda toplayici kanalda coker (bkz. bulgular.md #0)."""
+    df = q(f"""
+        SELECT condition, segment,
+            SUM(CASE WHEN value IS NULL OR isnan(value) THEN 1 ELSE 0 END) AS nan,
+            SUM(CASE WHEN variable='osmolality' AND compartment='Lumen' AND value < -1
+                     THEN 1 ELSE 0 END) AS neg_osm
+        FROM {DB} GROUP BY condition, segment
+    """)
+    bozuk = {}
+    for _, r in df.iterrows():
+        if r["nan"] > 0 or r["neg_osm"] > 0:
+            bozuk.setdefault(r["condition"], set()).add(r["segment"])
+    return bozuk
+
+def gecerli_veri(df, variable, value_col="value"):
+    """Fiziksel olarak imkansiz satirlari (NaN; non-neg degiskenlerde negatif) ayiklar.
+    Yakinsamayan senaryolarda cop egrilerin cizilmesini onler (evrensel emniyet agi).
+    Dondurur: (temiz_df, atilan_satir_sayisi)."""
+    n0 = len(df)
+    mask = df[value_col].notna()
+    if variable in NONNEG_VARS:
+        mask = mask & (df[value_col] >= -1e-9)
+    temiz = df[mask]
+    return temiz, n0 - len(temiz)
+
+def segment_bozuk_mu(senaryo, segment):
+    """Bu (senaryo, segment) sayisal olarak yakinsamadi mi? True ise tum segment gizlenir
+    (kesik/yaniltici egri birakmamak icin). Cozum sonlara dogru cokse bile guvenmeyiz."""
+    return segment in butunluk_haritasi().get(senaryo, set())
+
 # ============================================================
 #  Sidebar (her sayfa cagirir)
 # ============================================================
@@ -146,6 +183,15 @@ def render_sidebar():
                 unsafe_allow_html=True,
             )
         st.caption(f"Kod: `{senaryo}` · {len(senaryolar)} senaryolu kütüphane")
+
+        bozuk = butunluk_haritasi()
+        if senaryo in bozuk:
+            segs = ", ".join(sorted(bozuk[senaryo]))
+            st.warning(
+                f"**Veri uyarısı:** Bu senaryonun **{segs}** segment(ler)i sayısal olarak "
+                f"yakınsamadı (toplayıcı kanal). Bu segmentlerin verisi geçersizdir ve "
+                f"grafiklerde gizlenir. Proksimal–DCT arası güvenilir. Detay: Veri Bütünlüğü."
+            )
 
         st.markdown("---")
         sb = saglik_metrikleri()

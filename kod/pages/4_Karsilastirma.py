@@ -5,7 +5,7 @@ import streamlit as st
 import plotly.express as px
 from ui_kit import (
     setup_page, render_sidebar, q, DB, cite_footer, neph_for,
-    secenekler, senaryo_listesi, SENARYO_AD, NEPHRONS,
+    secenekler, senaryo_listesi, SENARYO_AD, NEPHRONS, gecerli_veri, segment_bozuk_mu,
 )
 
 setup_page("Karşılaştırma")
@@ -56,8 +56,18 @@ df = q(
     [*secilenler, solute, segment, compartment, nephron],
 )
 
+# Bu segmentte yakinsamayan senaryolari tumuyle cikar; sonra NaN emniyet agi.
+bozuk = [s for s in secilenler if segment_bozuk_mu(s, segment)]
+if bozuk:
+    df = df[~df["condition"].isin(bozuk)]
+    ad = ", ".join(SENARYO_AD.get(s, s) for s in bozuk)
+    st.warning(f"**{ad}** bu segmentte ({segment}) sayısal olarak **yakınsamadı**; "
+               f"karşılaştırmadan çıkarıldı. Distal/idrar yalnız temiz senaryolarda güvenilir.")
+df, _ = gecerli_veri(df, "con")
+
 if df.empty:
-    st.warning(f"Seçili kombinasyonda veri yok (örn: LDL yalnız jux nefronlarda).")
+    st.warning(f"Seçili kombinasyonda geçerli veri yok (örn: LDL yalnız jux nefronlarda, "
+               f"ya da seçili senaryolar bu segmentte yakınsamadı).")
     st.stop()
 
 # Renk paleti — F kırmızı tonları, M mavi tonları

@@ -3,7 +3,7 @@ import pandas as pd
 import streamlit as st
 from ui_kit import (
     setup_page, render_sidebar, q, DB, chart_yap, cite_footer, neph_for,
-    secenekler, SEG_ORDER_SUP, SEG_ORDER_JUX,
+    secenekler, SEG_ORDER_SUP, SEG_ORDER_JUX, gecerli_veri, segment_bozuk_mu,
 )
 
 setup_page("Tüm Nefron")
@@ -22,7 +22,11 @@ nephron = c3.selectbox("Nefron tipi", ["sup", "jux1", "jux2", "jux3", "jux4", "j
 
 order = SEG_ORDER_JUX if nephron.startswith("jux") else SEG_ORDER_SUP
 parts = []
+atlanan = []
 for i, seg in enumerate(order):
+    if segment_bozuk_mu(senaryo, seg):
+        atlanan.append(seg)      # yakinsamadi -> tum segment zincirden cikarilir
+        continue
     eff = neph_for(seg, nephron)
     d = q(
         f"""SELECT position, value FROM {DB}
@@ -30,6 +34,7 @@ for i, seg in enumerate(order):
             ORDER BY position""",
         [senaryo, solute, seg, compartment, eff],
     )
+    d, _ = gecerli_veri(d, "con")
     if d.empty:
         continue
     parts.append(d.assign(x=i + d["position"], segment=seg))
@@ -37,6 +42,9 @@ for i, seg in enumerate(order):
 if not parts:
     st.warning("Veri yok.")
 else:
+    if atlanan:
+        st.warning(f"Yakınsamayan segment(ler) zincirden çıkarıldı: **{', '.join(atlanan)}** "
+                   f"(bu senaryoda toplayıcı kanal geçersiz; bkz. yan panel).")
     full = pd.concat(parts, ignore_index=True)
     fig = chart_yap(full, "x", "value", "segment",
                     f"{nephron} nefronu — {solute} ({compartment})",

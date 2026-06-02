@@ -124,6 +124,14 @@ Yeni her senaryoda `python3 kod/veri_kontrol.py` çalıştırılır.
 **Yan artefakt (zararsız):** IMCD merged'de Cell-kompartman hacmi tüm senaryolarda büyük
 negatif (-79024) çıkar; Lumen (idrar yolu) hacmi sağlam. IMCD Cell hacmini kullanma.
 
+**App davranışı (cerrahi gizleme, Faz 22):** Streamlit'te 6 senaryo da kalır ama bozuk
+(senaryo, segment) kombinasyonu **tümüyle gizlenir** — kesik/yanıltıcı eğri bırakılmaz.
+Mekanizma `ui_kit.py`: `butunluk_haritasi()` (NaN + negatif Lumen osm → bozuk segment
+haritası), `segment_bozuk_mu()` (segment-düzeyi gizleme), `gecerli_veri()` (satır-düzeyi
+NaN/negatif emniyet ağı). Sidebar'da senaryo seçilince uyarı banner'ı çıkar. Sayfa 1/2/4
+guard'lı. Karar gerekçesi: M_normal ve F_diab_mod'un proksimal verisi GEÇERLİ ve değerli
+(erkek temeli + diyabet hiperfiltrasyonu); tümüyle silmek iyi veriyi de gizlemek olurdu.
+
 ### 1. SGLT2 inhibisyonu (gliflozinler) — F_SGLT2 vs F_normal (2026-06-02)
 
 **Veri bütünlüğü:** Her iki senaryo da TEMİZ (idrar dahil güvenilir).

@@ -2,7 +2,7 @@
 import streamlit as st
 import plotly.express as px
 from ui_kit import (
-    setup_page, render_sidebar, q, DB, cite_footer, secenekler, CD_SEGMENTS,
+    setup_page, render_sidebar, q, DB, cite_footer, secenekler, CD_SEGMENTS, gecerli_veri,
 )
 from egitim_icerigi import segment_info, atif_kisa
 
@@ -28,6 +28,8 @@ df = q(
         ORDER BY nephron, position""",
     [senaryo, solute, segment, compartment],
 )
+
+df, _ = gecerli_veri(df, "con")
 
 if df.empty:
     st.warning(f"`{segment}` segmenti yalnız tek tip nefronda var.")

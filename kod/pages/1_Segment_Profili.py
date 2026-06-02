@@ -2,7 +2,7 @@
 import streamlit as st
 from ui_kit import (
     setup_page, render_sidebar, q, DB, chart_yap, cite_footer, neph_for,
-    secenekler, NEPHRONS,
+    secenekler, NEPHRONS, gecerli_veri, segment_bozuk_mu,
 )
 from egitim_icerigi import segment_info, atif_kisa
 from yorum_motoru import yorumla
@@ -35,10 +35,26 @@ df = q(
     [senaryo, solute, segment, nephron, *comps],
 )
 
-if df.empty:
-    st.warning(f"Veri yok: `{segment}` segmenti `{nephron}` nefronda yok "
-               f"(LDL/LAL yalnız jux nefronlarda var).")
+df_raw = df
+seg_bozuk = segment_bozuk_mu(senaryo, segment)
+atilan = 0
+if seg_bozuk:
+    df = df.iloc[0:0]          # tum segment gizlenir (kesik egri birakma)
 else:
+    df, atilan = gecerli_veri(df, "con")
+
+if df.empty:
+    if seg_bozuk:
+        st.warning(f"`{segment}` bu senaryoda sayısal olarak **yakınsamadı** — veri gizlendi. "
+                   f"(Toplayıcı kanal çözüm hatası; bu segment için temiz bir senaryo seç. "
+                   f"Detay: Veri Bütünlüğü sayfası.)")
+    else:
+        st.warning(f"Veri yok: `{segment}` segmenti `{nephron}` nefronda yok "
+                   f"(LDL/LAL yalnız jux nefronlarda var).")
+else:
+    if atilan:
+        st.warning(f"{atilan} geçersiz nokta (yakınsama hatası) gizlendi; "
+                   f"aşağıda gösterilen veri güvenilir.")
     lumen = df[df.compartment == "Lumen"]
     if not lumen.empty:
         g, c = lumen["value"].iloc[0], lumen["value"].iloc[-1]

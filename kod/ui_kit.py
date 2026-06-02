@@ -148,13 +148,6 @@ def render_sidebar():
         st.caption(f"Kod: `{senaryo}` · {len(senaryolar)} senaryolu kütüphane")
 
         st.markdown("---")
-        st.warning(
-            "**`flux` doğrulanmadı:** CCD'de çok-membranlı taşıyıcı dosyaları (AE1, "
-            "HATPase, HKATPase) pozisyon-eksenli yorumda yanlış olabilir. Düzeltilene "
-            "dek flux'ı **doğrulama referansı olarak kullanma**."
-        )
-
-        st.markdown("---")
         sb = saglik_metrikleri()
         c1, c2 = st.columns(2)
         c1.metric("Bu senaryo", f"{sb['satir'] // max(sb['senaryo_sayisi'],1):,} satır")

@@ -40,11 +40,14 @@ st.markdown("---")
 st.markdown("### Bilinen açık konular")
 
 st.markdown("""
-<div style="border:1px solid #fde68a;background:#fffbeb;padding:12px 14px;border-radius:6px;margin-bottom:10px;">
-  <b style="color:#92400e;">Çok-membranlı flux dosyaları</b><br>
-  <span style="color:#374151;">CCD'de bazı taşıyıcılar (AE1 = 2 membran, HATPase/HKATPase = 3 membran)
-  tek dosyada birden çok membran profili barındırır. Loader şu an bu 246 dosyayı
-  (6 senaryo × ~41) tek profil sayıyor; membran başına ayırma görev #4'te yapılacak.</span>
+<div style="border:1px solid #bbf7d0;background:#f0fdf4;padding:12px 14px;border-radius:6px;margin-bottom:10px;">
+  <b style="color:#166534;">Çözüldü ✓ — Çok-membranlı flux dosyaları membran başına ayrıldı</b><br>
+  <span style="color:#374151;">CNT / CCD / OMCD'de bazı taşıyıcılar (AE1 = 2 membran,
+  HATPase / HKATPase = 3 membran, NHE1 = 2 membran) tek dosyaya, içe içe geçmiş
+  (interleaved) yazılır. Loader artık bunları stride ile ayrıştırıp her profili doğru
+  pozisyon eksenine oturtuyor ve <code>membrane</code> kolonunda anatomik kompartman
+  çiftiyle (örn. Lumen-ICA = A-tipi ara hücre apikal) etiketliyor. 6 senaryoda 246 dosya
+  ayrıştırıldı. Detay: <code>notlar/bulgular.md</code>.</span>
 </div>
 <div style="border:1px solid #bfdbfe;background:#eff6ff;padding:12px 14px;border-radius:6px;margin-bottom:10px;">
   <b style="color:#1e40af;">Senaryo kütüphanesi 6/10 başarılı</b><br>

@@ -83,9 +83,11 @@ python3 -c "import duckdb; print(duckdb.sql(\"SELECT DISTINCT segment FROM 'veri
 
 1. **Append-bug:** Modelin taşıyıcı akı dosyaları 'ekleme' modunda yazılır. Aynı klasöre
    iki kez simülasyon çalıştırırsan bozulur. **Her zaman temiz/boş klasöre çalıştır.**
-2. **Çok-membranlı flux dosyaları:** CCD'de bazı taşıyıcılar (AE1=400, HATPase=600 satır)
-   birden çok hücre membranına aittir; tek profil değil. Loader bunları şimdilik işaretliyor,
-   ileride membran başına ayrılacak. (bkz. notlar/bulgular.md)
+2. **Çok-membranlı flux dosyaları (ÇÖZÜLDÜ):** CNT/CCD/OMCD'de bazı taşıyıcılar
+   (AE1, HATPase, HKATPase, NHE1) birden çok hücre membranına aittir; model bunları tek
+   dosyaya içe içe geçmiş (interleaved) yazar. Loader artık stride ile ayrıştırıp her profili
+   doğru pozisyon eksenine oturtuyor ve `membrane` kolonunda anatomik kompartman çiftiyle
+   etiketliyor. (bkz. notlar/bulgular.md)
 
 ---
 
@@ -124,11 +126,11 @@ Tamamlanan:
 - [x] Multi-page Streamlit + paylaşılan ui_kit + eğitim katmanı + otomatik yorum
 - [x] Akademik altyapı: MIT + CC-BY 4.0 + CITATION.cff + Zenodo DOI
 - [x] Streamlit Cloud canlı: nefron-veri-gezgini.streamlit.app
+- [x] Çok-membranlı flux dosyaları membran başına ayrıldı (Görev #4 — `membrane` kolonu)
 
 Açık / sonraki:
 - [ ] `egitim_icerigi.py` özet alanlarını doldur (Türkmen 2024 paraphrase + cite)
 - [ ] Hu et al. 2021 ile gradyan (~734 mOsm) karşılaştırması
-- [ ] Çok-membranlı flux dosyalarını membran başına ayır (Görev #4, kod borcu)
 - [ ] 4 başarısız senaryo (Newton overflow): F_diab_severe, F_ACE, F_obese, F_UNX
 - [ ] Faz 4 (Observable + D3 interaktif görsel) · Faz 5 (hekim eğitici araç)
 

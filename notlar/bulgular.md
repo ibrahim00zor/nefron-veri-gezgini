@@ -88,8 +88,49 @@ cikis_Na = cikis_kutle / cikis_hacim = 4484 / 18.44 = 243.2 mM  ✓ veride bireb
 Klasik DTL teorisi (sadece su geçirgen, solüt korunur) SDL için geçerli; LDL (iç medulla)
 modern anlayışta urea-su tuzağı + paraselüler konvektif Na kaçağı + transcelüler kapalı.
 
+## Çok-membranlı flux ayrıştırması (Görev #4 — ÇÖZÜLDÜ, 2026-06-02)
+
+Kullanıcı sorusu zinciri değil, kod borcuydu: CNT/CCD/OMCD'de AE1, HATPase, HKATPase,
+NHE1 gibi taşıyıcılar bir segmentte **birden çok hücre membranında** bulunur. Model
+(output.py) bunların akısını **tek dosyaya, dosya adında membran kimliği OLMADAN,
+append modunda** yazar. Sonuç: N×grid satırlık dosyalar (grid=200 → 400 veya 600 satır).
+
+**Kritik keşif — veri bloklu değil, interleaved:** Yazım döngüsü dıştan pozisyon (`for j`),
+içten membran. Yani değerler `[poz0_m0, poz0_m1, poz0_m2, poz1_m0, ...]` sırasında. Önceki
+loader tek profil sayıp `position=linspace(0,1,n)` veriyordu → **pozisyon ekseni anlamsızdı.**
+
+Ampirik doğrulama (CCD HKATPase K, 600 satır): stride-3 ayrıştırması pürüzsüzlük 0.0001
+(kusursuz profil), bloklu varsayım 1.15 (gürültü). → Ayrıştırma: `membran m = values[m::k]`.
+
+**Membran sırası modelin parametre dosyalarından** (`datafiles/<SEG>params_*_hum.dat`,
+`transport_` satır sırası, sex-filtreli) çıkarıldı, dosya uzunluklarıyla doğrulandı.
+Etiket = kompartman çifti (`build_database.py` → `MEMBRANE_ORDER`):
+
+| Segment·Taşıyıcı | Membran sırası | Anlam |
+|---|---|---|
+| CNT/CCD HATPase | Lumen-ICA, ICB-LIS, ICB-Bath | A-tipi apikal + B-tipi bazolateral |
+| CNT/CCD HKATPase | Lumen-Cell, Lumen-ICA, Lumen-ICB | principal + A/B-tipi apikal |
+| CNT/CCD AE1 | ICA-LIS, ICA-Bath | A-tipi bazolateral (Cl/HCO3) |
+| OMCD HKATPase | Lumen-Cell, Lumen-ICA | principal + A-tipi apikal |
+| OMCD AE1 | ICA-LIS, ICA-Bath | A-tipi bazolateral |
+| OMCD NHE1 | Cell-LIS, Cell-Bath | principal bazolateral |
+
+**Fizyolojik doğrulama:** CCD HKATPase K → Lumen-Cell=0, Lumen-ICA=1.31, Lumen-ICB=0
+(H/K-ATPaz yalnız A-tipi ara hücre apikalinde aktif ✓). CCD HATPase H → Lumen-ICA negatif
+(A-tipi apikalden asit sekresyonu), ICB-LIS/Bath pozitif (B-tipi bazolateralden ters
+polarite ✓). Model intercalated hücre kutuplaşmasını doğru veriyor.
+
+**Sonuç:** Tidy tabloya `membrane` kolonu eklendi (tek-membranlı satırlar NULL). 6 senaryoda
+246 dosya ayrıştırıldı, toplam satır değişmedi (6.198.390 — değerler yeniden dağıtıldı).
+Eski apikal/paracellular Na flux'ları tek-membran olduğundan etkilenmedi; NKCC2A stokiyometri
+doğrulaması (Cl/Na=2.00) korundu.
+
+**Açık alt-konu (küçük):** NaKATPase/KCC4/SGLT1/GLUT gibi taşıyıcılar memb_id'yi dosya
+ADINDA taşıdığından zaten ayrı dosyalara yazılıyor (interleaved değil) — ama loader memb_id'yi
+şu an `membrane` kolonuna geçirmiyor (NULL kalıyor), aynı (taşıyıcı,solüt) anahtarında birden
+çok membran dosyası birleşebilir. Düşük öncelik; gerekirse ileride compart_id reverse-map ile.
+
 ## Açık teknik konular
-1. **Çok-membranlı flux dosyaları:** CCD'de AE1 (400 satır=2 membran), HATPase/HKATPase
-   (600=3 membran) vb. 41 dosya. Loader şu an tek profil sayıyor → **membran başına ayrılmalı.**
+1. ✓ **Çok-membranlı flux dosyaları** — ÇÖZÜLDÜ (yukarı bakınız, 2026-06-02).
 2. **Doğrulama:** ~734 tepe değeri Hu et al. 2021 makalesinin bildirdiği değerle uyuşuyor mu?
 3. **Belirsiz birimler:** pressure / diameter / length birimleri kaynaktan teyit edilmeli (şu an 'unknown').

@@ -27,6 +27,34 @@ UNITS = {'con':'mM', 'flow':'pmol/min', 'water_volume':'nl/min', 'flux':'pmol/mi
          'osmolality':'mOsm', 'pH':'', 'potential':'mV',
          'pressure':'unknown', 'diameter':'unknown', 'length':'unknown'}
 
+# Segment grid (dilim) boyutlari — modelden sabit. Geri kalan hepsi 200.
+SEGMENT_GRID = {'PT': 181, 'S3': 20}
+DEFAULT_GRID = 200
+
+# --- Cok-membranli flux dosyalari (Gorev #4) ---
+# Bazi tasiyicilar (AE1, HATPase, HKATPase, NHE1) bir segmentte birden cok hucre
+# membranina aittir; model bunlarin akisini TEK dosyaya, dosya adinda membran
+# kimligi OLMADAN, append modunda yazar. Sonuc: N*grid satirlik dosya, ve veri
+# pozisyon-bazli DEGIL, membran-bazli IC ICE GECMIS (interleaved):
+#     [poz0_m0, poz0_m1, poz0_m2, poz1_m0, poz1_m1, poz1_m2, ...]
+# Yani membran m'nin profili = values[m::membran_sayisi] (stride ile ayristirilir).
+# Membran sirasi modelin parametre dosyalarindaki (datafiles/<SEG>params_*_hum.dat)
+# transport_ satir sirasidir; asagidaki tablo o siradan, sex-filtreli, dosya
+# uzunluklariyla dogrulanarak cikarilmistir. Etiket = kompartman cifti.
+#   Kompartmanlar: Cell=principal, ICA=A-tipi ara hucre, ICB=B-tipi ara hucre,
+#   LIS=lateral hucrelerarasi bosluk, Bath=interstisyum, Lumen=tubul lumeni.
+MEMBRANE_ORDER = {
+    ('CNT',  'HATPase'):  ['Lumen-ICA', 'ICB-LIS', 'ICB-Bath'],
+    ('CNT',  'HKATPase'): ['Lumen-Cell', 'Lumen-ICA', 'Lumen-ICB'],
+    ('CNT',  'AE1'):      ['ICA-LIS', 'ICA-Bath'],
+    ('CCD',  'HATPase'):  ['Lumen-ICA', 'ICB-LIS', 'ICB-Bath'],
+    ('CCD',  'HKATPase'): ['Lumen-Cell', 'Lumen-ICA', 'Lumen-ICB'],
+    ('CCD',  'AE1'):      ['ICA-LIS', 'ICA-Bath'],
+    ('OMCD', 'HKATPase'): ['Lumen-Cell', 'Lumen-ICA'],
+    ('OMCD', 'AE1'):      ['ICA-LIS', 'ICA-Bath'],
+    ('OMCD', 'NHE1'):     ['Cell-LIS', 'Cell-Bath'],
+}
+
 
 def split_solute_membid(token):
     """ 'Na11'->('Na','11') ; 'HCO311'->('HCO3','11') ; 'Cl'->('Cl','') """
@@ -79,8 +107,24 @@ def parse_filename(stem):
     return rec
 
 
+def make_frame(rec, condition, profile, membrane):
+    """Tek bir (membran) profilini tidy DataFrame parcasina cevirir."""
+    n = len(profile)
+    return pd.DataFrame({
+        "sex": rec['sex'], "species": rec['species'], "condition": condition,
+        "nephron": rec['nephron'], "segment": rec['segment'],
+        "position": np.linspace(0, 1, n),
+        "variable": rec['variable'], "solute": rec['solute'],
+        "compartment": rec['compartment'], "transporter": rec['transporter'],
+        "membrane": membrane,
+        "value": profile, "unit": UNITS.get(rec['variable'], 'unknown'),
+        "source": condition,
+    })
+
+
 def load_scenario(scenario_dir, condition):
-    """Tek bir senaryo klasoru yukler, condition kolonu ekler."""
+    """Tek bir senaryo klasoru yukler, condition kolonu ekler.
+    Cok-membranli flux dosyalarini membran basina ayristirir (bkz. MEMBRANE_ORDER)."""
     files = sorted(glob.glob(os.path.join(scenario_dir, "*.txt")))
     if not files:
         return pd.DataFrame(), [], []
@@ -90,19 +134,24 @@ def load_scenario(scenario_dir, condition):
         rec = parse_filename(stem)
         if rec is None:
             unknown.append(stem); continue
-        values = pd.read_csv(path, header=None)[0]
+        values = pd.read_csv(path, header=None)[0].values
         n = len(values)
-        if n > 205:
-            suspicious.append((stem, n))
-        frames.append(pd.DataFrame({
-            "sex": rec['sex'], "species": rec['species'], "condition": condition,
-            "nephron": rec['nephron'], "segment": rec['segment'],
-            "position": np.linspace(0, 1, n),
-            "variable": rec['variable'], "solute": rec['solute'],
-            "compartment": rec['compartment'], "transporter": rec['transporter'],
-            "value": values.values, "unit": UNITS.get(rec['variable'], 'unknown'),
-            "source": condition,
-        }))
+        grid = SEGMENT_GRID.get(rec['segment'], DEFAULT_GRID)
+
+        # Cok-membranli flux dosyasi mi? (uzunluk grid'in tam kati ve > grid)
+        if rec['variable'] == 'flux' and n > grid and n % grid == 0:
+            k = n // grid
+            labels = MEMBRANE_ORDER.get((rec['segment'], rec['transporter']))
+            if labels is None or len(labels) != k:
+                # Eslestirme tablosunda yok -> yine de DOGRU ayristir (stride),
+                # ama anatomik etiket veremiyoruz; indeksle etiketle ve isaretle.
+                labels = [f"m{m}" for m in range(k)]
+                suspicious.append((stem, n, k))
+            for m in range(k):
+                # interleaved: membran m = her k'inci deger
+                frames.append(make_frame(rec, condition, values[m::k], labels[m]))
+        else:
+            frames.append(make_frame(rec, condition, values, None))
     return (pd.concat(frames, ignore_index=True) if frames else pd.DataFrame()), unknown, suspicious
 
 
@@ -136,7 +185,15 @@ if __name__ == "__main__":
     print(f"\nToplam satir: {len(table):,}")
     print(f"Senaryolar: {sorted(table['condition'].unique())}")
     print(f"Parse edilemeyen dosya: {len(unknown)}")
+    n_multi = int((table['membrane'].notna()).sum())
+    n_memb_files = table[table['membrane'].notna()][
+        ['condition','segment','transporter','solute','nephron']].drop_duplicates().shape[0]
+    print(f"Cok-membranli flux: {n_memb_files} dosya membran basina ayristirildi "
+          f"({n_multi:,} satir membran etiketli)")
     if suspicious:
-        print(f"NOT - cok-membranli flux dosyalari: {len(suspicious)} adet (flux kategorisinde pozisyon-yanlis riski; bkz. notlar/bulgular.md)")
+        print(f"UYARI - eslestirme tablosunda OLMAYAN cok-membranli dosya: {len(suspicious)} adet "
+              f"(stride ile dogru ayristirildi ama anatomik etiket yok; MEMBRANE_ORDER'a ekle):")
+        for item in suspicious[:10]:
+            print(f"    {item}")
     table.to_parquet(OUTPUT, index=False)
     print(f"\nYazildi -> {OUTPUT}")

@@ -20,14 +20,25 @@ dönüştürme projesi.
 ```
 Nefron-Projesi/
 ├── README.md          <- BU DOSYA (her şeyin haritası)
+├── BASLA_BURADAN.md   <- Yeni oturum açış prompt'u (bağlam aktarımı)
+├── LICENSE / LICENSE-CONTENT / CITATION.cff   <- Akademik altyapı
 ├── veri/
-│   ├── ham/           <- Modelin ürettiği ham txt çıktıları (5731 dosya)
-│   └── nephron_veritabani.parquet  <- Hepsinin tek tidy tablo hâli (~1M satır)
+│   ├── ham_scenarios/ <- Senaryo başına ham txt çıktıları (repo dışı, .gitignore)
+│   └── nephron_veritabani.parquet  <- 6 senaryo tek tidy tablo (6.198.390 satır)
 ├── kod/
-│   └── build_database.py   <- Ham txt'leri -> tidy Parquet'e çeviren yükleyici
+│   ├── app.py             <- Anasayfa (Streamlit landing)
+│   ├── ui_kit.py          <- Paylaşılan: sidebar, sorgu, grafik, atıf footer'ı
+│   ├── egitim_icerigi.py  <- Eğitim içeriği (Türkmen 2024 paraphrase + cite)
+│   ├── yorum_motoru.py    <- Otomatik kütle/hacim yorum ayrıştırıcı
+│   ├── build_database.py  <- Ham txt -> tidy Parquet (çoklu senaryo)
+│   ├── run_scenarios.py   <- Senaryo üretici (resumable)
+│   └── pages/             <- 1 Segment · 2 Tüm Nefron · 3 Tipler · 4 Karşılaştırma
+│                             5 Doğrulamalar · 6 Veri Bütünlüğü
 ├── notlar/
-│   ├── bulgular.md    <- Şimdiye kadarki bilimsel bulgular + kararlar
-│   └── terminoloji.md <- Segment / taşıyıcı / solüt sözlüğü
+│   ├── gunluk.md      <- Kronolojik proje hikayesi (faz faz)
+│   ├── bulgular.md    <- Bilimsel bulgular + kararlar
+│   ├── terminoloji.md <- Segment / taşıyıcı / solüt sözlüğü
+│   └── versiyonlar.md <- Reprodüksiyon için sabit sürümler
 └── yedekler/          <- Zaman damgalı yedekler ("sıfır noktaları")
 ```
 
@@ -103,11 +114,38 @@ yaparken **orijinal makaleyi de** referans göster:
 > human kidney.* iScience 24(6):102694.
 > https://doi.org/10.1016/j.isci.2021.102694
 
-## Mevcut durum
+## Mevcut durum (Faz 19.1 — 2026-06)
 
+Tamamlanan:
 - [x] Model bulundu, kuruldu, çalıştı (sup + jux1-5 + merged)
-- [x] Ham veri tidy Parquet'e çevrildi (1.033.065 satır, 0 hata)
+- [x] Ham veri tidy Parquet'e çevrildi (6 senaryo, 6.198.390 satır, 0 hata)
 - [x] Fizyolojik doğrulamalar yapıldı (bkz. bulgular.md)
-- [ ] Çok-membranlı flux dosyalarını membran başına ayır
-- [ ] ~734 mOsm tepe değerini Hu et al. 2021 ile karşılaştır
-- [ ] Streamlit ile ilk görselleştirme arayüzü
+- [x] 6 senaryo: F_normal, M_normal, F_diab_mod, F_HT, F_SGLT2, M_SGLT2
+- [x] Multi-page Streamlit + paylaşılan ui_kit + eğitim katmanı + otomatik yorum
+- [x] Akademik altyapı: MIT + CC-BY 4.0 + CITATION.cff + Zenodo DOI
+- [x] Streamlit Cloud canlı: nefron-veri-gezgini.streamlit.app
+
+Açık / sonraki:
+- [ ] `egitim_icerigi.py` özet alanlarını doldur (Türkmen 2024 paraphrase + cite)
+- [ ] Hu et al. 2021 ile gradyan (~734 mOsm) karşılaştırması
+- [ ] Çok-membranlı flux dosyalarını membran başına ayır (Görev #4, kod borcu)
+- [ ] 4 başarısız senaryo (Newton overflow): F_diab_severe, F_ACE, F_obese, F_UNX
+- [ ] Faz 4 (Observable + D3 interaktif görsel) · Faz 5 (hekim eğitici araç)
+
+---
+
+## Sıfır noktaları (geri dönülebilir checkpoint disiplini)
+
+Proje istenmeyen yöne kayarsa **bilinen-iyi bir noktaya** dönmek için iki katmanlı sistem:
+
+1. **Git tag** (asıl sıfır noktası — hafif, isimli, GitHub'da):
+   - `v1.0.0` — Zenodo DOI release
+   - `v-fazNN` — her milestone kapanışında (örn. `v-faz19.1`)
+   - Geri dönüş: `git checkout v-faz19.1` (incele) · sıfırlamak için `git reset --hard v-faz19.1`
+   - Liste: `git tag -l`
+2. **Zip yedek** (lokal, veri dahil — `yedekler/`):
+   - `yedek_lite_*` (kod+notlar+parquet, ~5-35MB) — her milestone
+   - `yedek_FULL_*` (her şey + ham veri) — ayda 1-2 kez
+   - Komut README altındaki "yedek alma" kuralında.
+
+**Kural:** Her faz kapanışında → commit + `v-fazNN` tag + lite yedek + `gunluk.md`'ye giriş.

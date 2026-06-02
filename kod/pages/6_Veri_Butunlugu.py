@@ -37,6 +37,23 @@ by_neph = q(f"SELECT nephron, COUNT(*) AS satır FROM {DB} GROUP BY nephron ORDE
 st.dataframe(by_neph, use_container_width=True, hide_index=True)
 
 st.markdown("---")
+st.markdown("### Senaryo veri bütünlüğü")
+st.caption("Modelin Newton çözücüsü bazı senaryolarda toplayıcı kanal (IMCD merged) "
+           "hesabında yakınsamayabilir. NaN ve negatif Lumen osmolalitesi (solüt toplamı, "
+           "fiziksel olarak negatif olamaz) gerçek yakınsama hatasını gösterir. "
+           "Distal/idrar iddiaları yalnız TEMİZ senaryolardan alınmalı.")
+integ = q(f"""
+    SELECT condition AS senaryo,
+        SUM(CASE WHEN value IS NULL OR isnan(value) THEN 1 ELSE 0 END) AS nan,
+        SUM(CASE WHEN variable='osmolality' AND compartment='Lumen' AND value < -1 THEN 1 ELSE 0 END) AS negatif_osm
+    FROM {DB} GROUP BY condition ORDER BY condition
+""")
+integ["durum"] = integ.apply(
+    lambda r: "TEMİZ" if (r["nan"] == 0 and r["negatif_osm"] == 0)
+    else "Toplayıcı kanal bozuk (proksimal OK)", axis=1)
+st.dataframe(integ, use_container_width=True, hide_index=True)
+
+st.markdown("---")
 st.markdown("### Bilinen açık konular")
 
 st.markdown("""

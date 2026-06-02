@@ -88,6 +88,107 @@ cikis_Na = cikis_kutle / cikis_hacim = 4484 / 18.44 = 243.2 mM  ✓ veride bireb
 Klasik DTL teorisi (sadece su geçirgen, solüt korunur) SDL için geçerli; LDL (iç medulla)
 modern anlayışta urea-su tuzağı + paraselüler konvektif Na kaçağı + transcelüler kapalı.
 
+## Senaryo karşılaştırma bulguları
+
+Senaryo kütüphanesinin (6 başarılı senaryo) asıl bilimsel değeri: ilaç/hastalık
+pertürbasyonlarının nefron boyunca etkisini normal ile yan yana okumak. Her bulgu önce
+fizyolojiden beklenir, sonra veride test edilir. **Kural: konsantrasyon yanıltır, kütle
+(akı = konsantrasyon × hacim) ve hacim ayrı ayrı bakılmalı.**
+
+### 0. KRİTİK: Senaryo veri bütünlüğü — "6 başarılı" aslında 4 temiz + 2 yarı-bozuk (2026-06-02)
+
+SGLT2 analizine başlarken veride şüpheli değerler (negatif idrar glukozu, negatif osmolalite)
+çıktı → sistematik tarama yapıldı (`kod/veri_kontrol.py`, yeniden kullanılabilir denetçi).
+
+**Yakınsama göstergeleri:** NaN değer + negatif Lumen osmolalitesi (osm = solüt toplamı,
+fiziksel olarak negatif olamaz). Sonuç:
+
+| Senaryo | NaN | Neg osm | Verdict |
+|---|---|---|---|
+| F_normal | 0 | 0 | **TEMİZ** |
+| F_SGLT2 | 0 | 0 | **TEMİZ** |
+| M_SGLT2 | 0 | 0 | **TEMİZ** |
+| F_HT | 0 | 0 | **TEMİZ** |
+| **M_normal** | 4047 | 0 | ✗ Toplayıcı kanal (IMCD merged) NaN — distal güvenilmez |
+| **F_diab_mod** | 796 | 199 | ✗ Toplayıcı kanal çöktü (osm min -13694) — distal geçersiz |
+
+**Sonuç:** "6 başarılı senaryo" aşırı iyimserdi. Tam temiz **4**; M_normal ve F_diab_mod'un
+**toplayıcı kanal (IMCD merged) hesabı yakınsamamış.** Her ikisinde de sorun yalnız IMCD'de;
+proksimal + Henle + erken distal (PT→DCT) sağlam. Bu, Faz 15'teki Newton instabilitesi
+temasının devamı — modelin merged/toplayıcı-kanal çözümü kırılgan.
+
+**Çalışma kuralı:** Distal/idrar (CCD, OMCD, IMCD merged) iddiaları **yalnız TEMİZ
+senaryolardan**. M_normal ve F_diab_mod yalnız proksimal-orta segmentler için kullanılır.
+Yeni her senaryoda `python3 kod/veri_kontrol.py` çalıştırılır.
+
+**Yan artefakt (zararsız):** IMCD merged'de Cell-kompartman hacmi tüm senaryolarda büyük
+negatif (-79024) çıkar; Lumen (idrar yolu) hacmi sağlam. IMCD Cell hacmini kullanma.
+
+### 1. SGLT2 inhibisyonu (gliflozinler) — F_SGLT2 vs F_normal (2026-06-02)
+
+**Veri bütünlüğü:** Her iki senaryo da TEMİZ (idrar dahil güvenilir).
+
+**Fizyolojik beklenti:** SGLT2 erken proksimal tübülde (S1-S2) filtre edilen glukozun
+~%90'ını Na ile birlikte (kotransport) geri emer. İnhibe edilince → glukozüri, Na'nın
+PT'de daha az emilimi → distale daha fazla Na → ozmotik diürez. Distal Na yükü artışı
+tübüloglomerüler geri bildirimi (TGF) tetikleyip GFR'yi düşürür (nefroproteksiyon mekanizması).
+
+**Veride test (sup nefron, lümen):**
+
+| Ölçüm | F_normal | F_SGLT2 | Yorum |
+|---|---|---|---|
+| SGLT2 akısı (ort) | 61.4 | 18.0 | İnhibisyon çalışıyor (~%70 ↓) |
+| **SGLT1 akısı (ort)** | 10.1 | **480** | **Telafi:** glukoz geç PT/S3'e kaçınca SGLT1 tavan yapar (~48×) |
+| GLUT2 (bazolateral) | 30.7 | 9.2 | Daha az transselüler glukoz → daha az bazolateral çıkış |
+| PT giriş glukoz (mM) | 5.00 | 5.00 | Filtrat aynı |
+| PT çıkış glukoz (mM) | 0.07 | 8.52 | Normalde %99 emilir; SGLT2'de su çekildikçe **konsantre olur** |
+| **İdrar glukozu (mM)** | 0.32 | **99.6** | **Masif glukozüri — gliflozinin terapötik imzası** |
+| PT çıkış Na (mM, konsantrasyon) | 137.5 | 132.7 | TUZAK: düşük görünür çünkü glukoz su tutar (seyreltir) |
+| **S3 çıkış Na AKISI (pmol/min, kütle)** | 4553 | **4870** | **Gerçek natriürez: +%7 kütle distale** |
+| S3 çıkış su akısı (nl/min) | 27.6 | 30.6 | Ozmotik diürez (+%11) |
+| **İdrar akışı (nl/min)** | 0.86 | **1.51** | **Diürez +%76** |
+
+**Bilimsel sonuç:** Model SGLT2 inhibisyonunun tüm klasik zincirini doğru üretiyor:
+(1) glukoz emilimi bloke → (2) SGLT1 telafisi (tam yakalayamaz) → glukozüri →
+(3) glukozun ozmotik su tutması → diürez → (4) SGLT2-Na kotransport kaybı → distale
+artmış Na kütlesi (natriürez). Bu, EMPA-KIDNEY/DAPA-CKD/CREDENCE çalışmalarındaki
+nefroproteksiyonun tübüler temeli.
+
+**Konsantrasyon-kütle dersi (yine!):** PT çıkış Na *konsantrasyonu* SGLT2'de DÜŞÜK
+(132.7 < 137.5) — saf sezgi "Na lümende kalmalı, yükselmeli" der ve yanılır. Çünkü glukozun
+ozmotik tuttuğu su Na'yı seyreltir. *Akı* (kütle) bakınca natriürez netçe görünür (+%7).
+
+**Model sınırı (dürüstlük):** Bu tek-nefron model GFR'yi sabit sınır koşulu olarak alır;
+TGF→afferent vazokonstriksiyon→GFR düşüşü adımını **modellemez**. Veri tübüler sonuçları
+(glukoz/Na/su delivery) gösterir; GFR geri bildirimi fizyolojik yorumdur, veri bulgusu değil.
+
+### 2. Diyabet (orta) — F_diab_mod vs F_normal — YALNIZ PROKSİMAL (2026-06-02)
+
+**Veri bütünlüğü uyarısı:** F_diab_mod'un toplayıcı kanalı (IMCD) çökmüş (bkz. #0).
+Yalnız proksimal–orta segment bulguları geçerli; idrar/distal iddiaları **kullanılamaz.**
+
+**Fizyolojik beklenti:** Diyabette hiperglisemi → artmış filtre glukoz yükü; böbrek SGLT2/SGLT1
+aktivitesini upregüle eder (glukoz emilimini artırır). Erken diyabette tipik bulgu
+**glomerüler hiperfiltrasyon** (artmış SNGFR).
+
+**Veride test (geçerli, proksimal):**
+
+| Ölçüm | F_normal | F_diab_mod | Yorum |
+|---|---|---|---|
+| **PT giriş su akısı (nl/min)** | 100 | **117** | **Hiperfiltrasyon +%17** (model SNGFR'yi sınır koşulu olarak yükseltir) |
+| PT giriş Na akısı (pmol/min) | 14000 | 16380 | Orantılı (+%17) artmış filtre Na yükü |
+| PT giriş glukoz (mM) | 5.0 | 8.6 | Hiperglisemi (artmış filtrat) |
+| PT çıkış glukoz (mM) | 0.070 | 0.027 | Diyabetik PT glukozu daha tam emer (upregüle SGLT2) |
+| SGLT2 akısı (ort, PT+S3) | 61.4 | 102.8 | **SGLT2 upregülasyonu (+%68)** |
+| S3 çıkış Na akısı (pmol/min) | 4553 | 5508 | +%21 — hiperfiltrasyondan ileri gelen artmış distal yük |
+
+**Bilimsel sonuç:** Model erken/orta diyabetin iki temel proksimal imzasını doğru üretiyor:
+(1) hiperfiltrasyon (giriş akısı +%17), (2) glukoz taşıyıcı upregülasyonu → hiperglisemiye
+rağmen glukozüri yok (orta diyabette beklenen; eşik aşılmadıkça SGLT2 kapasitesi yetişir).
+Bu, SGLT2 inhibisyonu bulgusunun (#1) **ayna görüntüsü** — diyabet glukoz/Na emilimini
+artırır, gliflozin azaltır. Klinik bağ: gliflozinler hiperfiltrasyonu tam bu mekanizmayla
+(distal Na ↑ → TGF → afferent kısılma) düzeltir; ama TGF→GFR adımı bu modelde yok (bkz. #1).
+
 ## Çok-membranlı flux ayrıştırması (Görev #4 — ÇÖZÜLDÜ, 2026-06-02)
 
 Kullanıcı sorusu zinciri değil, kod borcuydu: CNT/CCD/OMCD'de AE1, HATPase, HKATPase,

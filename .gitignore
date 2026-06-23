@@ -6,6 +6,11 @@ yedekler/
 veri/ham/
 veri/ham_scenarios/
 
+# Büyük veri arşivi (~90MB) — repo'ya girmemeli; yanlış `git add .`'i önler
+# GitHub 100MB'da dosyayı reddeder, 50MB'da uyarır
+veri.zip
+*.zip
+
 # Python
 __pycache__/
 *.pyc
@@ -35,3 +40,10 @@ notlar/dusunce_defteri.md
 
 # Okuma listesi — kişisel çalışma planı; lokal/gizli
 notlar/okuma_listesi.md
+
+# Segment atlası — TASLAK bilimsel belge; literatür iddiaları henüz çift-kontrol
+# edilmedi (yalnız PT, S3 doğrulandı). Beraber doğrulanınca public yapılabilir.
+notlar/segment_atlasi.md
+
+# D3 onizleme render (gecici, veri enjekte edilmis; repo disi)
+kod/d3_components/_onizleme_render.html

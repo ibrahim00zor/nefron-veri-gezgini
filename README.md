@@ -32,8 +32,11 @@ Nefron-Projesi/
 │   ├── yorum_motoru.py    <- Otomatik kütle/hacim yorum ayrıştırıcı
 │   ├── build_database.py  <- Ham txt -> tidy Parquet (çoklu senaryo)
 │   ├── run_scenarios.py   <- Senaryo üretici (resumable)
-│   └── pages/             <- 1 Segment · 2 Tüm Nefron · 3 Tipler · 4 Karşılaştırma
-│                             5 Doğrulamalar · 6 Veri Bütünlüğü
+│   ├── veri_kontrol.py    <- Veri bütünlüğü denetçisi (yakınsama kontrolü)
+│   ├── pages/             <- 1 Segment · 2 Tüm Nefron · 3 Tipler · 4 Karşılaştırma
+│   │                         5 Doğrulamalar · 6 Veri Bütünlüğü
+│   │                         7 İnteraktif Anatomi (BETA) · 8 Klinik Senaryolar (BETA)
+│   └── d3_components/     <- nephron_diagram.html (D3.js anatomik şablon)
 ├── notlar/
 │   ├── gunluk.md      <- Kronolojik proje hikayesi (faz faz)
 │   ├── bulgular.md    <- Bilimsel bulgular + kararlar
@@ -116,7 +119,7 @@ yaparken **orijinal makaleyi de** referans göster:
 > human kidney.* iScience 24(6):102694.
 > https://doi.org/10.1016/j.isci.2021.102694
 
-## Mevcut durum (Faz 19.1 — 2026-06)
+## Mevcut durum (Faz 25 — 2026-06)
 
 Tamamlanan:
 - [x] Model bulundu, kuruldu, çalıştı (sup + jux1-5 + merged)
@@ -127,12 +130,17 @@ Tamamlanan:
 - [x] Akademik altyapı: MIT + CC-BY 4.0 + CITATION.cff + Zenodo DOI
 - [x] Streamlit Cloud canlı: nefron-veri-gezgini.streamlit.app
 - [x] Çok-membranlı flux dosyaları membran başına ayrıldı (Görev #4 — `membrane` kolonu)
+- [x] Veri bütünlüğü guard'ı: yakınsamayan distal segmentler gizleniyor (Faz 21-22)
+- [x] Faz 24 — D3.js interaktif anatomi prototipi (sayfa 7, BETA)
+- [x] Faz 25 — klinik senaryolar / hekim eğitici aracı (sayfa 8, BETA)
+- [x] Faz 25.1 — sayfa 8 bilim-denetimi: "yük" anlatımı akıya (flow, pmol/min) çevrildi,
+      makula densa mTAL → cTAL düzeltildi, metindeki sayılar veriden dinamik hesaplanıyor
 
 Açık / sonraki:
 - [ ] `egitim_icerigi.py` özet alanlarını doldur (Türkmen 2024 paraphrase + cite)
+- [ ] `segment_atlasi.md` maratonu (12 segment) — şu an yalnız PT, S3 doğrulandı
 - [ ] Hu et al. 2021 ile gradyan (~734 mOsm) karşılaştırması
 - [ ] 4 başarısız senaryo (Newton overflow): F_diab_severe, F_ACE, F_obese, F_UNX
-- [ ] Faz 4 (Observable + D3 interaktif görsel) · Faz 5 (hekim eğitici araç)
 
 ---
 

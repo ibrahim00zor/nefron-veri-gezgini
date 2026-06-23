@@ -5,10 +5,9 @@ import os
 import json
 import streamlit as st
 import streamlit.components.v1 as components
-import pandas as pd
 
 from ui_kit import (
-    setup_page, render_sidebar, q, DB, neph_for,
+    setup_page, render_sidebar, q, DB,
     secenekler, NEPHRONS, segment_bozuk_mu, PROJ, CD_SEGMENTS
 )
 
@@ -18,9 +17,10 @@ senaryo_aktif = render_sidebar()
 st.markdown("## İnteraktif Anatomi (BETA)")
 st.caption(
     "D3.js tabanlı anatomik nefron çizimi. "
-    "Segment renkleri seçilen solütün konsantrasyonunu, "
+    "Segment renkleri seçilen solütün konsantrasyonunu (üstteki düğmeyle solüt **yüküne / akıya** çevrilebilir), "
     "segment kalınlıkları tübüler su akışını (hacim), "
-    "arka plan gradyanı interstisyum ozmolalitesini yansıtır."
+    "arka plan gradyanı interstisyum ozmolalitesini yansıtır. "
+    "Akış animasyonu parçacık hızıyla su akışını verir; bir segmente tıklayınca profili grafiğe sabitlenir."
 )
 
 # --- Ust seciciler ---
@@ -105,6 +105,35 @@ flow_min = min(all_flows) if all_flows else 0
 flow_max = max(all_flows) if all_flows else 100
 
 # ============================================================
+# 2b) Solut YUKU (load = molar aki, pmol/min) — renk modu icin
+# ============================================================
+# Konsantrasyon yaniltir; emilim/iletim icin KUTLE (aki) bakilir. Bu mod, sayfa 8
+# bilim-denetimindeki "altin kural"i diagramda gorsel kilar.
+load_data = {}
+for segment in segments_data.keys():
+    target_nephron = "merged" if segment in cd_segs else nephron_req
+    df_load = q(
+        f"""SELECT position, value FROM {DB}
+            WHERE condition=? AND variable='flow' AND solute=? AND compartment='Lumen'
+            AND segment=? AND nephron=? ORDER BY position""",
+        [senaryo_aktif, solute, segment, target_nephron]
+    )
+    if not df_load.empty and df_load['value'].notna().all():
+        load_data[segment] = {
+            "entry": float(df_load['value'].iloc[0]),
+            "exit": float(df_load['value'].iloc[-1]),
+            "mean": float(df_load['value'].mean()),
+            "profile": list(zip(
+                df_load['position'].round(4).tolist(),
+                df_load['value'].round(2).tolist()
+            )),
+        }
+
+all_loads = [v for s in load_data.values() for v in (s["entry"], s["exit"])]
+load_min = min(all_loads) if all_loads else 0
+load_max = max(all_loads) if all_loads else 100
+
+# ============================================================
 # 3) Interstisyum (Bath) ozmolalite gradyani (arka plan icin)
 # ============================================================
 # Kortikal segmentler (sup), medullar segmentler (sup veya merged CD)
@@ -142,8 +171,11 @@ injected_data = {
     "con_max": round(con_max, 2),
     "flow_min": round(flow_min, 2),
     "flow_max": round(flow_max, 2),
+    "load_min": round(load_min, 2),
+    "load_max": round(load_max, 2),
     "segments": segments_data,
     "flow": flow_data,
+    "load": load_data,
     "gradient_stops": gradient_stops,
     "nephron_type": nephron_req,
 }

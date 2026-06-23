@@ -1,0 +1,6 @@
+# Uygulama her zaman ACIK (light) temada acilsin.
+# Gerekce: renkler/paletler light'a gore tasarlandi (ui_kit acik arka planlar,
+# D3 diyagrami acik zemin). Dark temada cevre Streamlit arayuzu icerikle cakisiyor.
+# Ziyaretcinin OS/tarayici dark tercihi bu ayarla gecersiz kilinir.
+[theme]
+base = "light"

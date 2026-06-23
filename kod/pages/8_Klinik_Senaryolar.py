@@ -7,7 +7,7 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 from ui_kit import (
-    setup_page, render_sidebar, q, DB, cite_footer, COLOR_MAP
+    setup_page, render_sidebar, q, DB, cite_footer
 )
 
 setup_page("Klinik Senaryolar")

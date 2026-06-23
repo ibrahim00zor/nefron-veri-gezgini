@@ -129,27 +129,27 @@
       // PT: kivrili proksimal tubul (cortex)
       "PT":   { pts: [[120,135],[140,120],[170,140],[200,125],[230,140],[255,128],[275,145]], baseW: 12 },
       // S3: proksimal duz kisim (korteks→DM gecisi)
-      "S3":   { pts: [[275,145],[275,175],[270,210],[268,250]], baseW: 10 },
-      // SDL: ince inen kol (DM icerisinde)
-      "SDL":  { pts: [[268,250],[265,310],[262,380],[260,440],[258,510]], baseW: 5 },
-      // LDL: ince inen kol devami (IM, sadece jux nefronlarda)
-      "LDL":  { pts: [[258,510],[256,580],[255,650],[256,720],[260,780],[270,820],[285,840]], baseW: 5 },
-      // LAL: ince cikan kol (IM, sadece jux nefronlarda)
-      "LAL":  { pts: [[285,840],[300,830],[315,810],[325,770],[330,720],[332,650],[334,580],[336,510]], baseW: 6 },
-      // mTAL: kalin cikan kol - medullar kisim
-      "mTAL": { pts: [[336,510],[338,440],[340,380],[342,310],[344,250]], baseW: 10 },
+      "S3":   { pts: [[275,145],[275,175],[270,210],[268,255]], baseW: 10 },
+      // SDL: ince inen kol (DM icerisinde, korteks-medulla sinirindan baslar)
+      "SDL":  { pts: [[268,255],[266,310],[264,380],[262,440],[260,510]], baseW: 5 },
+      // LDL: ince inen kol devami (IM, sadece jux nefronlarda) — derin U-donusu
+      "LDL":  { pts: [[260,510],[258,580],[257,650],[258,720],[262,780],[272,820],[290,845]], baseW: 5 },
+      // LAL: ince cikan kol (IM, sadece jux nefronlarda) — derin U-donusu
+      "LAL":  { pts: [[290,845],[308,825],[318,790],[324,730],[328,660],[330,590],[332,510]], baseW: 6 },
+      // mTAL: kalin cikan kol - medullar kisim (inen kolun hemen yaninda yukari cikar)
+      "mTAL": { pts: [[300,510],[302,440],[304,380],[306,310],[308,255]], baseW: 10 },
       // cTAL: kalin cikan kol - kortikal kisim  
-      "cTAL": { pts: [[344,250],[346,210],[348,175],[350,145]], baseW: 10 },
+      "cTAL": { pts: [[308,255],[310,210],[315,175],[320,145]], baseW: 10 },
       // DCT: distal kivrili tubul (korteks, kisa)
-      "DCT":  { pts: [[350,145],[370,125],[395,140],[418,120],[440,140]], baseW: 9 },
+      "DCT":  { pts: [[320,145],[340,125],[365,140],[390,120],[415,140]], baseW: 9 },
       // CNT: baglayici tubul
-      "CNT":  { pts: [[440,140],[460,130],[478,142]], baseW: 8 },
+      "CNT":  { pts: [[415,140],[438,130],[460,142]], baseW: 8 },
       // CCD: kortikal toplayici kanal
-      "CCD":  { pts: [[478,142],[480,180],[482,220],[483,250]], baseW: 9 },
+      "CCD":  { pts: [[460,142],[462,180],[464,220],[465,255]], baseW: 9 },
       // OMCD: dis medullar toplayici kanal
-      "OMCD": { pts: [[483,250],[485,320],[487,400],[488,510]], baseW: 10 },
+      "OMCD": { pts: [[465,255],[467,320],[469,400],[470,510]], baseW: 10 },
       // IMCD: ic medullar toplayici kanal (papillaya iner)
-      "IMCD": { pts: [[488,510],[490,600],[492,700],[494,790],[495,870]], baseW: 12 },
+      "IMCD": { pts: [[470,510],[472,600],[474,700],[476,790],[477,870]], baseW: 12 },
     };
 
     // ============================================================
@@ -192,17 +192,17 @@
     // Segment etiket pozisyonlari (okunabilirlik icin ayarlanmis)
     const labelPos = {
       "PT":   { x: 190, y: 108, anchor: "middle" },
-      "S3":   { x: 245, y: 195, anchor: "end" },
-      "SDL":  { x: 238, y: 380, anchor: "end" },
-      "LDL":  { x: 233, y: 680, anchor: "end" },
-      "LAL":  { x: 355, y: 680, anchor: "start" },
-      "mTAL": { x: 362, y: 380, anchor: "start" },
-      "cTAL": { x: 370, y: 195, anchor: "start" },
-      "DCT":  { x: 395, y: 108, anchor: "middle" },
-      "CNT":  { x: 460, y: 118, anchor: "middle" },
-      "CCD":  { x: 508, y: 195, anchor: "start" },
-      "OMCD": { x: 510, y: 400, anchor: "start" },
-      "IMCD": { x: 516, y: 750, anchor: "start" },
+      "S3":   { x: 243, y: 200, anchor: "end" },
+      "SDL":  { x: 240, y: 400, anchor: "end" },
+      "LDL":  { x: 235, y: 700, anchor: "end" },
+      "LAL":  { x: 352, y: 700, anchor: "start" },
+      "mTAL": { x: 325, y: 400, anchor: "start" },
+      "cTAL": { x: 335, y: 200, anchor: "start" },
+      "DCT":  { x: 368, y: 108, anchor: "middle" },
+      "CNT":  { x: 440, y: 118, anchor: "middle" },
+      "CCD":  { x: 488, y: 200, anchor: "start" },
+      "OMCD": { x: 492, y: 400, anchor: "start" },
+      "IMCD": { x: 498, y: 750, anchor: "start" },
     };
 
     // Hangi segmentler cizilecek? (sup nefronunda LDL/LAL yok)
@@ -211,6 +211,37 @@
       if ((s === "LDL" || s === "LAL") && !isJux) return false;
       return true;
     });
+
+    // SUP nefronlari icin hairpin U-donusu (SDL sonu → mTAL basi)
+    // Jux nefronlarinda bu donusu LDL→LAL zaten yapar
+    if (!isJux) {
+      const sdlEnd = topo["SDL"].pts[topo["SDL"].pts.length - 1];
+      const mtalStart = topo["mTAL"].pts[0];
+      const midX = (sdlEnd[0] + mtalStart[0]) / 2;
+      const loopY = sdlEnd[1] + 45; // DM/IM sinirina yakin U-donusu
+      const hairpinPts = [
+        sdlEnd,
+        [sdlEnd[0] - 2, sdlEnd[1] + 15],
+        [midX, loopY],
+        [mtalStart[0] + 2, mtalStart[1] + 15],
+        mtalStart
+      ];
+      svg.append("path")
+        .attr("d", lineGen(hairpinPts))
+        .attr("fill", "none")
+        .attr("stroke", "#9ca3af")
+        .attr("stroke-width", 4)
+        .attr("stroke-linecap", "round")
+        .attr("stroke-linejoin", "round")
+        .attr("opacity", 0.7)
+        .attr("stroke-dasharray", "none");
+      // Hairpin etiketi
+      svg.append("text")
+        .attr("x", midX).attr("y", loopY + 16)
+        .attr("text-anchor", "middle")
+        .attr("font-size", "9px").attr("fill", "#9ca3af").attr("font-style", "italic")
+        .text("Henle kulpu dönüşü");
+    }
 
     for (const segName of drawSegs) {
       const t = topo[segName];
@@ -315,7 +346,7 @@
 
     // Idrar ok isareti (papilla cikis)
     svg.append("text")
-      .attr("x", 495).attr("y", H - 40)
+      .attr("x", 477).attr("y", H - 40)
       .attr("font-size", "10px").attr("fill", "#92400e").attr("text-anchor", "middle")
       .text("↓ İdrar");
 

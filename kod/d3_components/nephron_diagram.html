@@ -7,19 +7,21 @@
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: transparent; }
     
-    #main-container { display: flex; gap: 0; width: 100%; transition: all 0.3s ease; }
-    #diagram-panel { flex: 1; min-width: 0; transition: flex 0.3s ease; }
+    #main-container { display: flex; flex-direction: column; width: 100%; }
+    #diagram-panel { width: 100%; }
     #chart-panel {
-      flex: 0; overflow: hidden; opacity: 0; transition: flex 0.3s ease, opacity 0.3s ease;
-      border-left: 1px solid #e5e7eb; background: #fafafa;
+      width: 100%; max-height: 0; overflow: hidden; opacity: 0;
+      transition: max-height 0.5s ease, opacity 0.4s ease, padding 0.4s ease;
+      border-top: 1px solid #e5e7eb; background: #fafafa;
+      padding: 0 14px;
     }
-    #chart-panel.open { flex: 0.65; opacity: 1; }
+    #chart-panel.open { max-height: 400px; opacity: 1; padding: 10px 14px 14px; }
     #chart-panel .chart-header {
-      padding: 10px 14px 6px; font-size: 12px; font-weight: 600; color: #374151;
-      border-bottom: 1px solid #e5e7eb; display: flex; justify-content: space-between; align-items: center;
+      padding: 4px 0 6px; font-size: 12px; font-weight: 600; color: #374151;
+      display: flex; justify-content: space-between; align-items: center;
     }
     #chart-panel .chart-hint {
-      padding: 8px 14px; font-size: 11px; color: #9ca3af; font-style: italic;
+      padding: 6px 0; font-size: 11px; color: #9ca3af; font-style: italic;
     }
     
     #toggle-chart-btn {
@@ -397,13 +399,14 @@
         cumX += 1;
       });
 
-      const cM = { top: 30, right: 15, bottom: 40, left: 50 };
-      const cW = 380 - cM.left - cM.right;
-      const cH = 700 - cM.top - cM.bottom;
+      const cM = { top: 20, right: 20, bottom: 36, left: 50 };
+      const cW = 620 - cM.left - cM.right;
+      const cH = 220 - cM.top - cM.bottom;
 
       const chartSvg = chartArea.append("svg")
-        .attr("width", cW + cM.left + cM.right)
-        .attr("height", cH + cM.top + cM.bottom)
+        .attr("viewBox", `0 0 ${cW + cM.left + cM.right} ${cH + cM.top + cM.bottom}`)
+        .attr("width", "100%")
+        .attr("preserveAspectRatio", "xMidYMid meet")
         .append("g").attr("transform", `translate(${cM.left},${cM.top})`);
 
       const xScale = d3.scaleLinear().domain([0, cumX]).range([0, cW]);
@@ -451,8 +454,8 @@
           .attr("d", d3.line().curve(d3.curveCatmullRom.alpha(0.3))(lineData))
           .attr("fill", "none")
           .attr("stroke", segColors[s] || "#6b7280")
-          .attr("stroke-width", isHighlighted ? 3 : 1.5)
-          .attr("opacity", isAny ? (isHighlighted ? 1 : 0.15) : 0.7);
+          .attr("stroke-width", isHighlighted ? 3.5 : 1.5)
+          .attr("opacity", isAny ? (isHighlighted ? 1 : 0.35) : 0.7);
       });
 
       // X-ekseni etiketleri (segment isimleri)

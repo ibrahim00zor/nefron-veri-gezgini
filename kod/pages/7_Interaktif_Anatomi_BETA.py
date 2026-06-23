@@ -162,7 +162,7 @@ except FileNotFoundError:
 json_str = json.dumps(injected_data, ensure_ascii=False)
 html_rendered = html_template.replace("__INJECTED_DATA__", json_str)
 
-components.html(html_rendered, height=960, scrolling=False)
+components.html(html_rendered, height=1300, scrolling=True)
 
 # Model siniri notu (kullanicinin istegi: kisa, belirgin olmasin, uzerine dusen bulsun)
 st.caption(

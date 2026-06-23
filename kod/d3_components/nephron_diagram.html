@@ -4,190 +4,320 @@
   <meta charset="UTF-8">
   <script src="https://d3js.org/d3.v7.min.js"></script>
   <style>
-    body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: transparent; }
+    
     .tooltip {
-      position: absolute;
-      text-align: left;
-      padding: 8px 12px;
-      font-size: 13px;
-      background: white;
-      border: 1px solid #d1d5db;
-      border-radius: 6px;
-      pointer-events: none;
-      opacity: 0;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-      transition: opacity 0.1s;
+      position: absolute; text-align: left; padding: 10px 14px; font-size: 12px;
+      background: rgba(255,255,255,0.97); border: 1px solid #d1d5db; border-radius: 8px;
+      pointer-events: none; opacity: 0; z-index: 100;
+      box-shadow: 0 8px 25px -5px rgba(0,0,0,0.12), 0 4px 10px -5px rgba(0,0,0,0.06);
+      transition: opacity 0.15s ease; max-width: 260px; line-height: 1.5;
     }
-    .segment { cursor: pointer; transition: stroke-width 0.2s; }
-    .segment:hover { stroke-width: 14; filter: brightness(0.9); }
-    .zone-label { font-size: 14px; fill: #6b7280; font-weight: 500; letter-spacing: 0.05em; text-transform: uppercase; }
+    .tooltip .tt-title { font-size: 14px; font-weight: 700; color: #111827; margin-bottom: 4px; }
+    .tooltip .tt-row { display: flex; justify-content: space-between; gap: 12px; }
+    .tooltip .tt-label { color: #6b7280; }
+    .tooltip .tt-val { font-weight: 600; color: #1e3a8a; }
+    .tooltip hr { border: none; border-top: 1px solid #e5e7eb; margin: 5px 0; }
+
+    .segment-path { cursor: pointer; transition: filter 0.2s, opacity 0.2s; }
+    .segment-path:hover { filter: brightness(0.85) drop-shadow(0 0 6px rgba(0,0,0,0.25)); }
+    
+    .zone-label {
+      font-size: 11px; fill: #9ca3af; font-weight: 600;
+      letter-spacing: 0.12em; text-transform: uppercase;
+    }
+    .seg-label { font-size: 10px; fill: #374151; font-weight: 600; letter-spacing: 0.03em; }
+    .osm-label { font-size: 10px; fill: #92400e; font-weight: 500; }
+    .legend-title { font-size: 11px; fill: #374151; font-weight: 600; }
+    .legend-tick { font-size: 10px; fill: #6b7280; }
+    .glom-label { font-size: 11px; fill: #991b1b; font-weight: 700; }
   </style>
 </head>
 <body>
-  <div id="diagram-container"></div>
+  <div id="diagram"></div>
   <div id="tooltip" class="tooltip"></div>
 
   <script>
-    // Python will replace this token with actual JSON data
-    const INJECTED_DATA = /*DATA_PLACEHOLDER*/ {"solute": "Na", "min_val": 0, "max_val": 300}; 
+    // ============================================================
+    // DATA (Python injects here)
+    // ============================================================
+    const D = JSON.parse('__INJECTED_DATA__');
 
-    const width = 600;
-    const height = 900;
-    const svg = d3.select("#diagram-container")
-      .append("svg")
-      .attr("viewBox", `0 0 ${width} ${height}`)
+    const W = 680, H = 940;
+    const svg = d3.select("#diagram").append("svg")
+      .attr("viewBox", `0 0 ${W} ${H}`)
       .attr("width", "100%")
-      .attr("height", "100vh");
-
-    // Background Zones
-    const zones = [
-      {name: "Korteks", y: 0, h: 250, fill: "#fdfbf7"},
-      {name: "Dış Medulla", y: 250, h: 250, fill: "#f8f3eb"},
-      {name: "İç Medulla", y: 500, h: 400, fill: "#f0e6d6"}
-    ];
-
-    svg.selectAll(".zone")
-      .data(zones)
-      .enter().append("rect")
-      .attr("class", "zone")
-      .attr("x", 0)
-      .attr("y", d => d.y)
-      .attr("width", width)
-      .attr("height", d => d.h)
-      .attr("fill", d => d.fill);
-
-    svg.selectAll(".zone-label")
-      .data(zones)
-      .enter().append("text")
-      .attr("class", "zone-label")
-      .attr("x", 20)
-      .attr("y", d => d.y + 30)
-      .text(d => d.name);
-
-    // Nefron Topology (Simplified coordinates)
-    const topology = {
-      "PT": [[100,150], [150,150]],
-      "S3": [[150,150], [150,250]],
-      "SDL": [[150,250], [150,500]],
-      "LDL": [[150,500], [150,750], [160, 800], [180, 810], [200, 810]], 
-      "LAL": [[200,810], [220, 810], [240, 800], [250, 750], [250,500]], 
-      "mTAL": [[250,500], [250,250]],
-      "cTAL": [[250,250], [250,150]],
-      "DCT": [[250,150], [300,100], [350,150]],
-      "CNT": [[350,150], [450,150]],
-      "CCD": [[450,150], [450,250]],
-      "OMCD": [[450,250], [450,500]],
-      "IMCD": [[450,500], [450,850]]
-    };
-
-    // Glomerulus symbol
-    svg.append("circle")
-      .attr("cx", 100)
-      .attr("cy", 150)
-      .attr("r", 15)
-      .attr("fill", "#dc2626")
-      .attr("opacity", 0.8);
-    
-    svg.append("text")
-      .attr("x", 85)
-      .attr("y", 125)
-      .attr("font-size", "12px")
-      .attr("font-weight", "bold")
-      .attr("fill", "#991b1b")
-      .text("Glomerulus");
-
-    // Color scale for the heatmap
-    const minV = INJECTED_DATA.min_val || 0;
-    const maxV = INJECTED_DATA.max_val || 100;
-    const colorScale = d3.scaleSequential(d3.interpolateYlOrRd).domain([minV, maxV]);
+      .attr("preserveAspectRatio", "xMidYMid meet");
 
     const defs = svg.append("defs");
+
+    // ============================================================
+    // MADDE 3: Kortikomeduller ozmolalite gradyan arka plani
+    // ============================================================
+    const stops = D.gradient_stops || [];
+    if (stops.length >= 2) {
+      // Renk paleti: acik krem (korteks) → koyu amber (papilla)
+      const osmMin = d3.min(stops, d => d.osm);
+      const osmMax = d3.max(stops, d => d.osm);
+      const osmColor = d3.scaleSequential(d3.interpolateYlOrBr).domain([osmMin - 50, osmMax + 100]);
+
+      const bgGrad = defs.append("linearGradient")
+        .attr("id", "bg-osm-grad")
+        .attr("x1", "0%").attr("y1", "0%")
+        .attr("x2", "0%").attr("y2", "100%");
+
+      stops.forEach(s => {
+        bgGrad.append("stop")
+          .attr("offset", `${s.frac * 100}%`)
+          .attr("stop-color", osmColor(s.osm));
+      });
+
+      svg.append("rect")
+        .attr("x", 0).attr("y", 0).attr("width", W).attr("height", H)
+        .attr("fill", "url(#bg-osm-grad)").attr("opacity", 0.35);
+
+      // Zone sinirlari (ince kesikli cizgi)
+      const zoneBounds = [
+        { y: H * 0.27, label: "Korteks" },
+        { y: H * 0.55, label: "Dış Medulla" },
+        { y: H * 0.56, label: "İç Medulla" }
+      ];
+      zoneBounds.forEach(z => {
+        svg.append("line")
+          .attr("x1", 0).attr("y1", z.y).attr("x2", W).attr("y2", z.y)
+          .attr("stroke", "#d4a574").attr("stroke-width", 0.8)
+          .attr("stroke-dasharray", "6,4").attr("opacity", 0.5);
+      });
+      // Zone labels (sol kenar)
+      svg.append("text").attr("class", "zone-label").attr("x", 12).attr("y", 25).text("Korteks");
+      svg.append("text").attr("class", "zone-label").attr("x", 12).attr("y", H * 0.28 + 18).text("Dış Medulla");
+      svg.append("text").attr("class", "zone-label").attr("x", 12).attr("y", H * 0.57 + 18).text("İç Medulla");
+
+      // Ozmolalite lejanidi (sag kenar, dikey cubuk)
+      const osmLegH = 300, osmLegX = W - 55, osmLegY = H * 0.35;
+      const osmLegGrad = defs.append("linearGradient")
+        .attr("id", "osm-leg-grad")
+        .attr("x1", "0%").attr("y1", "0%").attr("x2", "0%").attr("y2", "100%");
+      for (let i = 0; i <= 10; i++) {
+        osmLegGrad.append("stop")
+          .attr("offset", `${i * 10}%`)
+          .attr("stop-color", osmColor(osmMin + (osmMax - osmMin) * (i / 10)));
+      }
+      svg.append("rect")
+        .attr("x", osmLegX).attr("y", osmLegY)
+        .attr("width", 12).attr("height", osmLegH)
+        .attr("fill", "url(#osm-leg-grad)").attr("rx", 3).attr("opacity", 0.7);
+      svg.append("text").attr("class", "osm-label")
+        .attr("x", osmLegX + 6).attr("y", osmLegY - 8)
+        .attr("text-anchor", "middle").text("mOsm");
+      svg.append("text").attr("class", "osm-label")
+        .attr("x", osmLegX - 4).attr("y", osmLegY + 6)
+        .attr("text-anchor", "end").text(Math.round(osmMin));
+      svg.append("text").attr("class", "osm-label")
+        .attr("x", osmLegX - 4).attr("y", osmLegY + osmLegH + 4)
+        .attr("text-anchor", "end").text(Math.round(osmMax));
+    }
+
+    // ============================================================
+    // MADDE 1: Anatomik nefron topolojisi
+    // ============================================================
+    // Koordinatlar: y=0 korteks ustu, y~250 DM siniri, y~520 IM siniri, y~870 papilla
+    // x: sol=inen kol, sag=cikan kol, uzak sag=toplayici kanal
+
+    const topo = {
+      // PT: kivrili proksimal tubul (cortex)
+      "PT":   { pts: [[120,135],[140,120],[170,140],[200,125],[230,140],[255,128],[275,145]], baseW: 12 },
+      // S3: proksimal duz kisim (korteks→DM gecisi)
+      "S3":   { pts: [[275,145],[275,175],[270,210],[268,250]], baseW: 10 },
+      // SDL: ince inen kol (DM icerisinde)
+      "SDL":  { pts: [[268,250],[265,310],[262,380],[260,440],[258,510]], baseW: 5 },
+      // LDL: ince inen kol devami (IM, sadece jux nefronlarda)
+      "LDL":  { pts: [[258,510],[256,580],[255,650],[256,720],[260,780],[270,820],[285,840]], baseW: 5 },
+      // LAL: ince cikan kol (IM, sadece jux nefronlarda)
+      "LAL":  { pts: [[285,840],[300,830],[315,810],[325,770],[330,720],[332,650],[334,580],[336,510]], baseW: 6 },
+      // mTAL: kalin cikan kol - medullar kisim
+      "mTAL": { pts: [[336,510],[338,440],[340,380],[342,310],[344,250]], baseW: 10 },
+      // cTAL: kalin cikan kol - kortikal kisim  
+      "cTAL": { pts: [[344,250],[346,210],[348,175],[350,145]], baseW: 10 },
+      // DCT: distal kivrili tubul (korteks, kisa)
+      "DCT":  { pts: [[350,145],[370,125],[395,140],[418,120],[440,140]], baseW: 9 },
+      // CNT: baglayici tubul
+      "CNT":  { pts: [[440,140],[460,130],[478,142]], baseW: 8 },
+      // CCD: kortikal toplayici kanal
+      "CCD":  { pts: [[478,142],[480,180],[482,220],[483,250]], baseW: 9 },
+      // OMCD: dis medullar toplayici kanal
+      "OMCD": { pts: [[483,250],[485,320],[487,400],[488,510]], baseW: 10 },
+      // IMCD: ic medullar toplayici kanal (papillaya iner)
+      "IMCD": { pts: [[488,510],[490,600],[492,700],[494,790],[495,870]], baseW: 12 },
+    };
+
+    // ============================================================
+    // MADDE 2: Akisa (flow) gore dinamik kalinlik
+    // ============================================================
+    const flowMin = D.flow_min || 0.5;
+    const flowMax = D.flow_max || 100;
+    // stroke-width: akis degerine orantili, [3, 20] araliginda
+    const thickScale = d3.scaleLinear().domain([flowMin, flowMax]).range([3, 20]).clamp(true);
+
+    // ============================================================
+    // Konsantrasyon renk skalasi
+    // ============================================================
+    const conMin = D.con_min || 0;
+    const conMax = D.con_max || 300;
+    const colorScale = d3.scaleSequential(d3.interpolateYlOrRd).domain([conMin, conMax]);
+
+    // ============================================================
+    // Glomerulus
+    // ============================================================
+    const glomG = svg.append("g").attr("transform", "translate(105, 120)");
+    // Bowman kapsulu (dis daire)
+    glomG.append("circle").attr("r", 22).attr("fill", "none").attr("stroke", "#dc2626").attr("stroke-width", 1.5).attr("opacity", 0.6);
+    // Kapiller yumagi (ic daireler)
+    [[-4,-3,6],[5,-2,5],[0,5,5],[-6,4,4],[6,5,4]].forEach(([cx,cy,r]) => {
+      glomG.append("circle").attr("cx",cx).attr("cy",cy).attr("r",r)
+        .attr("fill", "#ef4444").attr("opacity", 0.5).attr("stroke", "#dc2626").attr("stroke-width", 0.5);
+    });
+    svg.append("text").attr("class", "glom-label").attr("x", 105).attr("y", 90).attr("text-anchor", "middle").text("Glomerulus");
+    // Afferent/efferent ok
+    svg.append("text").attr("x", 65).attr("y", 118).attr("font-size", "9px").attr("fill", "#9ca3af").text("Aff →");
+    svg.append("text").attr("x", 130).attr("y", 108).attr("font-size", "9px").attr("fill", "#9ca3af").text("→ Eff");
+
+    // ============================================================
+    // Segment cizimi (D3 path)
+    // ============================================================
     const lineGen = d3.line().curve(d3.curveCatmullRom.alpha(0.5));
     const tooltip = d3.select("#tooltip");
 
-    for (const [segName, pts] of Object.entries(topology)) {
-      const segData = INJECTED_DATA.segments ? INJECTED_DATA.segments[segName] : null;
-      let strokeColor = "#e5e7eb"; // default empty color
+    // Segment etiket pozisyonlari (okunabilirlik icin ayarlanmis)
+    const labelPos = {
+      "PT":   { x: 190, y: 108, anchor: "middle" },
+      "S3":   { x: 245, y: 195, anchor: "end" },
+      "SDL":  { x: 238, y: 380, anchor: "end" },
+      "LDL":  { x: 233, y: 680, anchor: "end" },
+      "LAL":  { x: 355, y: 680, anchor: "start" },
+      "mTAL": { x: 362, y: 380, anchor: "start" },
+      "cTAL": { x: 370, y: 195, anchor: "start" },
+      "DCT":  { x: 395, y: 108, anchor: "middle" },
+      "CNT":  { x: 460, y: 118, anchor: "middle" },
+      "CCD":  { x: 508, y: 195, anchor: "start" },
+      "OMCD": { x: 510, y: 400, anchor: "start" },
+      "IMCD": { x: 516, y: 750, anchor: "start" },
+    };
 
-      if (segData) {
-        // Create a linear gradient for this segment
-        const gradId = `grad-${segName}`;
+    // Hangi segmentler cizilecek? (sup nefronunda LDL/LAL yok)
+    const isJux = D.nephron_type && D.nephron_type.startsWith("jux");
+    const drawSegs = Object.keys(topo).filter(s => {
+      if ((s === "LDL" || s === "LAL") && !isJux) return false;
+      return true;
+    });
+
+    for (const segName of drawSegs) {
+      const t = topo[segName];
+      const segCon = D.segments ? D.segments[segName] : null;
+      const segFlow = D.flow ? D.flow[segName] : null;
+
+      // Kalinlik: akis verisine gore veya baseline
+      let sw = t.baseW;
+      if (segFlow) {
+        sw = thickScale(segFlow.mean);
+      }
+
+      // Renk: konsantrasyon gradyani veya gri (veri yoksa)
+      let strokeColor = "#d1d5db";
+      if (segCon) {
+        const gradId = `con-grad-${segName}`;
+        const pts = t.pts;
         const grad = defs.append("linearGradient")
           .attr("id", gradId)
           .attr("gradientUnits", "userSpaceOnUse")
           .attr("x1", pts[0][0]).attr("y1", pts[0][1])
           .attr("x2", pts[pts.length-1][0]).attr("y2", pts[pts.length-1][1]);
-        
-        grad.append("stop").attr("offset", "0%").attr("stop-color", colorScale(segData.entry));
-        grad.append("stop").attr("offset", "100%").attr("stop-color", colorScale(segData.exit));
-        
+        grad.append("stop").attr("offset", "0%").attr("stop-color", colorScale(segCon.entry));
+        grad.append("stop").attr("offset", "100%").attr("stop-color", colorScale(segCon.exit));
         strokeColor = `url(#${gradId})`;
       }
 
+      // Segment cizimi
       svg.append("path")
-        .attr("class", "segment")
-        .attr("d", lineGen(pts))
+        .attr("class", "segment-path")
+        .attr("d", lineGen(t.pts))
         .attr("fill", "none")
         .attr("stroke", strokeColor)
-        .attr("stroke-width", 10)
+        .attr("stroke-width", sw)
         .attr("stroke-linecap", "round")
         .attr("stroke-linejoin", "round")
         .on("mouseover", function(event) {
-          if (!segData) return;
-          d3.select(this).style("stroke-width", 14);
-          tooltip.transition().duration(100).style("opacity", .95);
-          tooltip.html(`
-            <b style='color:#111827;font-size:14px;'>${segName}</b><br/>
-            <hr style='margin:4px 0;border:none;border-top:1px solid #e5e7eb;'/>
-            Giriş: <b style='color:#dc2626'>${segData.entry.toFixed(1)}</b> mM<br/>
-            Çıkış: <b style='color:#dc2626'>${segData.exit.toFixed(1)}</b> mM<br/>
-            Ortalama: <b>${segData.mean.toFixed(1)}</b> mM
-          `)
-          .style("left", (event.pageX + 15) + "px")
-          .style("top", (event.pageY - 28) + "px");
+          d3.select(this).attr("stroke-width", sw + 4);
+          let html = `<div class='tt-title'>${segName}</div><hr>`;
+          if (segCon) {
+            html += `
+              <div class='tt-row'><span class='tt-label'>Giriş (${D.solute})</span><span class='tt-val'>${segCon.entry.toFixed(1)} mM</span></div>
+              <div class='tt-row'><span class='tt-label'>Çıkış (${D.solute})</span><span class='tt-val'>${segCon.exit.toFixed(1)} mM</span></div>
+              <div class='tt-row'><span class='tt-label'>Ort (${D.solute})</span><span class='tt-val'>${segCon.mean.toFixed(1)} mM</span></div>`;
+          }
+          if (segFlow) {
+            html += `<hr>
+              <div class='tt-row'><span class='tt-label'>Akış giriş</span><span class='tt-val'>${segFlow.entry.toFixed(2)} nl/min</span></div>
+              <div class='tt-row'><span class='tt-label'>Akış çıkış</span><span class='tt-val'>${segFlow.exit.toFixed(2)} nl/min</span></div>`;
+          }
+          tooltip.html(html)
+            .style("opacity", 1)
+            .style("left", (event.pageX + 18) + "px")
+            .style("top", (event.pageY - 30) + "px");
+        })
+        .on("mousemove", function(event) {
+          tooltip.style("left", (event.pageX + 18) + "px").style("top", (event.pageY - 30) + "px");
         })
         .on("mouseout", function() {
-          d3.select(this).style("stroke-width", 10);
-          tooltip.transition().duration(200).style("opacity", 0);
+          d3.select(this).attr("stroke-width", sw);
+          tooltip.style("opacity", 0);
         });
-        
-      if (segName !== "LDL" && segName !== "LAL") {
+
+      // Segment etiketi
+      const lp = labelPos[segName];
+      if (lp) {
         svg.append("text")
-          .attr("x", pts[0][0] - 35)
-          .attr("y", pts[0][1] + 15)
-          .attr("font-size", "11px")
-          .attr("fill", "#6b7280")
+          .attr("class", "seg-label")
+          .attr("x", lp.x).attr("y", lp.y)
+          .attr("text-anchor", lp.anchor)
           .text(segName);
       }
     }
 
-    // Legend
-    const legendWidth = 200;
-    const legendHeight = 15;
-    const legend = svg.append("g").attr("transform", `translate(${width - 250}, 30)`);
-    
-    const legendGrad = defs.append("linearGradient").attr("id", "legend-grad");
-    for(let i=0; i<=10; i++) {
-        legendGrad.append("stop")
-          .attr("offset", `${i*10}%`)
-          .attr("stop-color", colorScale(minV + (maxV - minV) * (i/10)));
+    // ============================================================
+    // Konsantrasyon lejanidi (ust sag)
+    // ============================================================
+    const cLegW = 160, cLegH = 12;
+    const cLeg = svg.append("g").attr("transform", `translate(${W - 220}, 20)`);
+    const cLegGrad = defs.append("linearGradient").attr("id", "con-legend");
+    for (let i = 0; i <= 10; i++) {
+      cLegGrad.append("stop")
+        .attr("offset", `${i*10}%`)
+        .attr("stop-color", colorScale(conMin + (conMax - conMin) * i / 10));
     }
-    
-    legend.append("rect")
-      .attr("width", legendWidth)
-      .attr("height", legendHeight)
-      .attr("fill", "url(#legend-grad)")
-      .attr("rx", 4);
-      
-    legend.append("text")
-      .attr("x", 0)
-      .attr("y", -6)
-      .attr("font-size", "12px")
-      .attr("fill", "#374151")
-      .text(`Konsantrasyon (${INJECTED_DATA.solute}) - mM`);
-      
-    legend.append("text").attr("x", 0).attr("y", legendHeight + 14).attr("font-size", "11px").text(minV.toFixed(1));
-    legend.append("text").attr("x", legendWidth).attr("y", legendHeight + 14).attr("font-size", "11px").attr("text-anchor", "end").text(maxV.toFixed(1));
+    cLeg.append("rect").attr("width", cLegW).attr("height", cLegH).attr("fill", "url(#con-legend)").attr("rx", 3);
+    cLeg.append("text").attr("class", "legend-title").attr("y", -6).text(`${D.solute} Konsantrasyon (mM)`);
+    cLeg.append("text").attr("class", "legend-tick").attr("y", cLegH + 12).text(conMin.toFixed(0));
+    cLeg.append("text").attr("class", "legend-tick").attr("x", cLegW).attr("y", cLegH + 12).attr("text-anchor", "end").text(conMax.toFixed(0));
+
+    // Akis lejanidi (ust sag, konsantrasyonun altinda)
+    const fLeg = svg.append("g").attr("transform", `translate(${W - 220}, 58)`);
+    fLeg.append("text").attr("class", "legend-title").attr("y", -4).text("Kalınlık ∝ Su Akışı (nl/min)");
+    // ince cizgi
+    fLeg.append("line").attr("x1", 0).attr("y1", 10).attr("x2", 30).attr("y2", 10)
+      .attr("stroke", "#9ca3af").attr("stroke-width", 3).attr("stroke-linecap", "round");
+    fLeg.append("text").attr("class", "legend-tick").attr("x", 35).attr("y", 14).text(flowMin.toFixed(1));
+    // kalin cizgi
+    fLeg.append("line").attr("x1", 90).attr("y1", 10).attr("x2", 120).attr("y2", 10)
+      .attr("stroke", "#9ca3af").attr("stroke-width", 14).attr("stroke-linecap", "round");
+    fLeg.append("text").attr("class", "legend-tick").attr("x", 128).attr("y", 14).text(flowMax.toFixed(1));
+
+    // Idrar ok isareti (papilla cikis)
+    svg.append("text")
+      .attr("x", 495).attr("y", H - 40)
+      .attr("font-size", "10px").attr("fill", "#92400e").attr("text-anchor", "middle")
+      .text("↓ İdrar");
 
   </script>
 </body>

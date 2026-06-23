@@ -65,6 +65,10 @@ for segment in all_segs_raw['segment'].tolist():
         "entry": float(df_seg['value'].iloc[0]),
         "exit": float(df_seg['value'].iloc[-1]),
         "mean": float(df_seg['value'].mean()),
+        "profile": list(zip(
+            df_seg['position'].round(4).tolist(),
+            df_seg['value'].round(4).tolist()
+        )),
     }
 
 if not segments_data:

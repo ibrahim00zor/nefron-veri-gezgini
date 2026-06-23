@@ -7,6 +7,29 @@
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: transparent; }
     
+    #main-container { display: flex; gap: 0; width: 100%; transition: all 0.3s ease; }
+    #diagram-panel { flex: 1; min-width: 0; transition: flex 0.3s ease; }
+    #chart-panel {
+      flex: 0; overflow: hidden; opacity: 0; transition: flex 0.3s ease, opacity 0.3s ease;
+      border-left: 1px solid #e5e7eb; background: #fafafa;
+    }
+    #chart-panel.open { flex: 0.65; opacity: 1; }
+    #chart-panel .chart-header {
+      padding: 10px 14px 6px; font-size: 12px; font-weight: 600; color: #374151;
+      border-bottom: 1px solid #e5e7eb; display: flex; justify-content: space-between; align-items: center;
+    }
+    #chart-panel .chart-hint {
+      padding: 8px 14px; font-size: 11px; color: #9ca3af; font-style: italic;
+    }
+    
+    #toggle-chart-btn {
+      position: absolute; top: 8px; right: 8px; z-index: 50;
+      padding: 6px 14px; font-size: 11px; font-weight: 600; cursor: pointer;
+      background: #1e3a8a; color: white; border: none; border-radius: 6px;
+      transition: background 0.2s; letter-spacing: 0.02em;
+    }
+    #toggle-chart-btn:hover { background: #1e40af; }
+    
     .tooltip {
       position: absolute; text-align: left; padding: 10px 14px; font-size: 12px;
       background: rgba(255,255,255,0.97); border: 1px solid #d1d5db; border-radius: 8px;
@@ -35,7 +58,19 @@
   </style>
 </head>
 <body>
-  <div id="diagram"></div>
+  <div style="position:relative;">
+    <button id="toggle-chart-btn">Grafiği Aç</button>
+    <div id="main-container">
+      <div id="diagram-panel"><div id="diagram"></div></div>
+      <div id="chart-panel">
+        <div class="chart-header">
+          <span id="chart-title">Segment Profili</span>
+        </div>
+        <div class="chart-hint" id="chart-hint">Nefron üzerinde bir segmentin üzerine gelin</div>
+        <div id="chart-area"></div>
+      </div>
+    </div>
+  </div>
   <div id="tooltip" class="tooltip"></div>
 
   <script>
@@ -241,6 +276,7 @@
       // Segment cizimi
       svg.append("path")
         .attr("class", "segment-path")
+        .attr("data-seg", segName)
         .attr("d", lineGen(t.pts))
         .attr("fill", "none")
         .attr("stroke", strokeColor)
@@ -318,6 +354,157 @@
       .attr("x", 495).attr("y", H - 40)
       .attr("font-size", "10px").attr("fill", "#92400e").attr("text-anchor", "middle")
       .text("↓ İdrar");
+
+    // ============================================================
+    // GRAFIK PANELI: Senkronize segment profil grafigi
+    // ============================================================
+    const chartPanel = d3.select("#chart-panel");
+    const chartArea = d3.select("#chart-area");
+    const chartTitle = d3.select("#chart-title");
+    const chartHint = d3.select("#chart-hint");
+    let chartOpen = false;
+
+    // Toggle butonu
+    d3.select("#toggle-chart-btn").on("click", function() {
+      chartOpen = !chartOpen;
+      chartPanel.classed("open", chartOpen);
+      d3.select(this).text(chartOpen ? "Grafiği Kapat" : "Grafiği Aç");
+    });
+
+    // Segment siralama (nefron boyunca fizyolojik sira)
+    const segOrder = ["PT","S3","SDL","LDL","LAL","mTAL","cTAL","DCT","CNT","CCD","OMCD","IMCD"];
+    // Segment renkleri (her segment icin sabit)
+    const segColors = {
+      "PT":"#2563eb", "S3":"#3b82f6", "SDL":"#06b6d4", "LDL":"#0891b2",
+      "LAL":"#0d9488", "mTAL":"#059669", "cTAL":"#10b981", "DCT":"#d97706",
+      "CNT":"#f59e0b", "CCD":"#dc2626", "OMCD":"#be185d", "IMCD":"#7c3aed"
+    };
+
+    // Tam grafigi ciz (tum segmentler, secili olan belirgin)
+    function drawChart(highlightSeg) {
+      chartArea.selectAll("*").remove();
+      chartHint.style("display", highlightSeg ? "none" : "block");
+
+      const segsWithProfile = segOrder.filter(s => D.segments && D.segments[s] && D.segments[s].profile);
+      if (segsWithProfile.length === 0) return;
+
+      // Global x-ekseni: kumulatif pozisyon (segment zincirleme)
+      // Her segment 0-1 arasi, ama grafik uzerinde ard arda dizilir
+      let cumX = 0;
+      const segRanges = {}; // {segName: {x0, x1}}
+      segsWithProfile.forEach(s => {
+        segRanges[s] = { x0: cumX, x1: cumX + 1 };
+        cumX += 1;
+      });
+
+      const cM = { top: 30, right: 15, bottom: 40, left: 50 };
+      const cW = 380 - cM.left - cM.right;
+      const cH = 700 - cM.top - cM.bottom;
+
+      const chartSvg = chartArea.append("svg")
+        .attr("width", cW + cM.left + cM.right)
+        .attr("height", cH + cM.top + cM.bottom)
+        .append("g").attr("transform", `translate(${cM.left},${cM.top})`);
+
+      const xScale = d3.scaleLinear().domain([0, cumX]).range([0, cW]);
+
+      // Y domain: tum segmentlerin min/max degeri
+      let allVals = [];
+      segsWithProfile.forEach(s => {
+        D.segments[s].profile.forEach(([p,v]) => allVals.push(v));
+      });
+      const yMin = d3.min(allVals) * 0.95;
+      const yMax = d3.max(allVals) * 1.05;
+      const yScale = d3.scaleLinear().domain([yMin, yMax]).range([cH, 0]);
+
+      // Arka plan: segment bantlari (alternatif tonlar)
+      segsWithProfile.forEach((s, i) => {
+        const r = segRanges[s];
+        chartSvg.append("rect")
+          .attr("x", xScale(r.x0)).attr("y", 0)
+          .attr("width", xScale(r.x1) - xScale(r.x0)).attr("height", cH)
+          .attr("fill", i % 2 === 0 ? "#f9fafb" : "#f3f4f6")
+          .attr("opacity", highlightSeg === s ? 0.0 : 1.0); // secili segment arkaplanini kaldir
+      });
+
+      // Vurgulanan segment arkaplan
+      if (highlightSeg && segRanges[highlightSeg]) {
+        const hr = segRanges[highlightSeg];
+        chartSvg.append("rect")
+          .attr("x", xScale(hr.x0)).attr("y", 0)
+          .attr("width", xScale(hr.x1) - xScale(hr.x0)).attr("height", cH)
+          .attr("fill", segColors[highlightSeg] || "#2563eb")
+          .attr("opacity", 0.08);
+      }
+
+      // Her segment icin cizgi
+      segsWithProfile.forEach(s => {
+        const r = segRanges[s];
+        const profile = D.segments[s].profile;
+        const lineData = profile.map(([p, v]) => {
+          return [xScale(r.x0 + p), yScale(v)];
+        });
+        const isHighlighted = (highlightSeg === s);
+        const isAny = !!highlightSeg;
+
+        chartSvg.append("path")
+          .attr("d", d3.line().curve(d3.curveCatmullRom.alpha(0.3))(lineData))
+          .attr("fill", "none")
+          .attr("stroke", segColors[s] || "#6b7280")
+          .attr("stroke-width", isHighlighted ? 3 : 1.5)
+          .attr("opacity", isAny ? (isHighlighted ? 1 : 0.15) : 0.7);
+      });
+
+      // X-ekseni etiketleri (segment isimleri)
+      segsWithProfile.forEach(s => {
+        const r = segRanges[s];
+        const midX = xScale((r.x0 + r.x1) / 2);
+        chartSvg.append("text")
+          .attr("x", midX).attr("y", cH + 24)
+          .attr("text-anchor", "middle")
+          .attr("font-size", "9px")
+          .attr("font-weight", highlightSeg === s ? "700" : "400")
+          .attr("fill", highlightSeg === s ? (segColors[s] || "#111") : "#9ca3af")
+          .text(s);
+      });
+
+      // Y-ekseni
+      const yAxis = d3.axisLeft(yScale).ticks(6).tickSize(-cW);
+      chartSvg.append("g")
+        .call(yAxis)
+        .call(g => g.selectAll(".tick line").attr("stroke", "#e5e7eb").attr("stroke-dasharray", "2,2"))
+        .call(g => g.selectAll(".tick text").attr("font-size", "9px").attr("fill", "#6b7280"))
+        .call(g => g.select(".domain").remove());
+
+      // Y-ekseni etiketi
+      chartSvg.append("text")
+        .attr("transform", "rotate(-90)")
+        .attr("x", -cH/2).attr("y", -38)
+        .attr("text-anchor", "middle")
+        .attr("font-size", "10px").attr("fill", "#374151").attr("font-weight", "600")
+        .text(`${D.solute} (mM)`);
+
+      // Baslik guncelle
+      if (highlightSeg) {
+        chartTitle.text(`${highlightSeg} — ${D.solute} Profili`);
+      } else {
+        chartTitle.text(`Tüm Segmentler — ${D.solute}`);
+      }
+    }
+
+    // Ilk cizim (hicbir segment secili degil)
+    drawChart(null);
+
+    // Segment hover'larini grafik paneline bagla
+    // Mevcut segment-path'lere ek event handler ekle
+    svg.selectAll(".segment-path")
+      .on("mouseover.chart", function(event) {
+        const segName = d3.select(this).attr("data-seg");
+        if (chartOpen && segName) drawChart(segName);
+      })
+      .on("mouseout.chart", function() {
+        if (chartOpen) drawChart(null);
+      });
 
   </script>
 </body>

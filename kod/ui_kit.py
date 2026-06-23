@@ -253,3 +253,146 @@ def cite_footer():
         "</div>",
         unsafe_allow_html=True,
     )
+
+# ============================================================
+#  Kaynak / atif sistemi (akademik referans kartlari)
+# ============================================================
+# KURAL: Buraya YALNIZ gercek, kunyesi/DOI'si dogrulanmis kaynaklar girer
+# (CITATION.cff ile tutarli). Uydurma atif/DOI/baslik KESINLIKLE yok.
+# Birincil klinik literatur (RCT, KDIGO vb.) ancak cift-dogrulama sonrasi eklenir.
+# NOT: Türkmen 2024 (ders kitabi) kasten burada DEGIL — ona atif kullanicinin kendi
+# notlarinda, kendi cumleleriyle yapilir (kitaba erisim yalniz onda).
+KAYNAKLAR = {
+    "hu2021": {
+        "tip": "Makale",
+        "yazarlar": "Hu R., Layton A.T.",
+        "yil": 2021,
+        "baslik": "Sex differences in solute and water handling in the human kidney: "
+                  "Modeling and functional implications",
+        "kaynak": "iScience 24(6):102694",
+        "doi": "10.1016/j.isci.2021.102694",
+        "not": "Bu uygulamadaki tüm verinin türetildiği matematik model (birincil kaynak).",
+    },
+    "model_stadt": {
+        "tip": "Yazılım",
+        "yazarlar": "Stadt M., Layton A.T.",
+        "yil": None,
+        "baslik": "nephron — matematik model uygulaması",
+        "kaynak": "github.com/mstadt/nephron",
+        "url": "https://github.com/mstadt/nephron",
+        "not": "Senaryoların üretildiği açık kaynak model kodu.",
+    },
+    # --- Klinik literatur (PubMed; kullanici 2026-06'da dogruladi) ---
+    "vallon2022": {
+        "tip": "Makale",
+        "yazarlar": "Vallon V.",
+        "yil": 2022,
+        "baslik": "Renoprotective Effects of SGLT2 Inhibitors",
+        "kaynak": "Heart Failure Clinics 18(4):539-549",
+        "doi": "10.1016/j.hfc.2022.03.005",
+        "not": "SGLT2i'nin TGF restorasyonu ve nefroprotektif mekanizmasının mekanistik incelemesi.",
+    },
+    "upadhyay2024": {
+        "tip": "Makale",
+        "yazarlar": "Upadhyay A.",
+        "yil": 2024,
+        "baslik": "SGLT2 Inhibitors and Kidney Protection: Mechanisms Beyond Tubuloglomerular Feedback",
+        "kaynak": "Kidney360 5(5):771-782",
+        "doi": "10.34067/KID.0000000000000425",
+        "not": "TGF ve ötesi nefroprotektif mekanizmalar (güncel inceleme).",
+    },
+    "empakidney2023": {
+        "tip": "RCT",
+        "yazarlar": "EMPA-KIDNEY Collaborative Group (Herrington WG, Staplin N, ve ark.)",
+        "yil": 2023,
+        "baslik": "Empagliflozin in Patients with Chronic Kidney Disease",
+        "kaynak": "N Engl J Med 388(2):117-127 (online 2022)",
+        "doi": "10.1056/NEJMoa2204233",
+        "not": "Landmark randomize çalışma: empagliflozinin renal sonuçlara klinik etkisi.",
+    },
+    "vallon_thomson2020": {
+        "tip": "Makale",
+        "yazarlar": "Vallon V., Thomson S.C.",
+        "yil": 2020,
+        "baslik": "The tubular hypothesis of nephron filtration and diabetic kidney disease",
+        "kaynak": "Nature Reviews Nephrology 16(6):317-336",
+        "doi": "10.1038/s41581-020-0256-y",
+        "not": "Diyabetik hiperfiltrasyonun tübüler hipotezinin referans incelemesi.",
+    },
+    "ivy_bailey2014": {
+        "tip": "Makale",
+        "yazarlar": "Ivy J.R., Bailey M.A.",
+        "yil": 2014,
+        "baslik": "Pressure natriuresis and the renal control of arterial blood pressure",
+        "kaynak": "The Journal of Physiology 592(18):3955-3967",
+        "doi": "10.1113/jphysiol.2014.271676",
+        "not": "Basınç natriürezi ve renal kan basıncı kontrolünün yetkili incelemesi.",
+    },
+    "kdigo2022diabetes": {
+        "tip": "Kılavuz",
+        "yazarlar": "KDIGO Diabetes Work Group",
+        "yil": 2022,
+        "baslik": "KDIGO 2022 Clinical Practice Guideline for Diabetes Management in Chronic Kidney Disease",
+        "kaynak": "Kidney International 102(5S):S1-S127",
+        "doi": "10.1016/j.kint.2022.06.008",
+        "not": "Diyabet + KBH'de SGLT2i, RAS blokajı ve glisemik yönetim için klinik kılavuz.",
+    },
+    # --- Faz 27: Vaka 2-3 doz kaynakları ---
+    "kdigo2021bp": {
+        "tip": "Kılavuz",
+        "yazarlar": "KDIGO Blood Pressure Work Group (Cheung AK, Chang TI, ve ark.)",
+        "yil": 2021,
+        "baslik": "KDIGO 2021 Clinical Practice Guideline for the Management of Blood Pressure "
+                  "in Chronic Kidney Disease",
+        "kaynak": "Kidney International 99(3S):S1-S87",
+        "doi": "10.1016/j.kint.2020.11.003",
+        "not": "KBH'de kan basıncı yönetimi: hedef <120 mmHg sistolik, ACEi/ARB albüminüride "
+              "birinci basamak, tolere edilen en yüksek onaylı doza titre edilmeli.",
+    },
+    "agarwal2021click": {
+        "tip": "RCT",
+        "yazarlar": "Agarwal R., Sinha A.D., Cramer A.E., ve ark.",
+        "yil": 2021,
+        "baslik": "Chlorthalidone for Hypertension in Advanced Chronic Kidney Disease",
+        "kaynak": "N Engl J Med 385(27):2507-2519",
+        "doi": "10.1056/NEJMoa2110730",
+        "not": "CLICK çalışması: klortalidone ileri KBH'de (eGFR <30) etkili kan basıncı düşüşü sağladı.",
+    },
+}
+
+def kaynak_karti(ref):
+    """Tek bir referansi akademik bir bilgi kutusu olarak render eder."""
+    yil = f" ({ref['yil']})" if ref.get("yil") else ""
+    alt_satir = [s for s in (ref.get("kaynak"), (f"ISBN {ref['isbn']}" if ref.get("isbn") else None)) if s]
+    if ref.get("doi"):
+        link = (f"<a href='https://doi.org/{ref['doi']}' target='_blank' "
+                f"style='color:#1e40af;text-decoration:none;'>doi:{ref['doi']}</a>")
+    elif ref.get("url"):
+        link = (f"<a href='{ref['url']}' target='_blank' "
+                f"style='color:#1e40af;text-decoration:none;'>{ref['url']}</a>")
+    else:
+        link = ""
+    st.markdown(
+        "<div style='border:1px solid #e5e7eb;border-left:3px solid #1e3a8a;"
+        "background:#f8fafc;border-radius:6px;padding:10px 14px;margin:6px 0;font-size:0.84rem;'>"
+        "<span style='display:inline-block;background:#1e3a8a;color:white;font-size:0.66rem;"
+        f"padding:1px 8px;border-radius:10px;letter-spacing:0.03em;'>{ref.get('tip','Kaynak')}</span> "
+        f"<b style='color:#111827;'>{ref.get('yazarlar','')}{yil}.</b> {ref.get('baslik','')}. "
+        f"<i style='color:#4b5563;'>{' · '.join(alt_satir)}</i>"
+        + (f"<br>{link}" if link else "")
+        + (f"<div style='color:#6b7280;font-size:0.78rem;margin-top:4px;'>{ref['not']}</div>"
+           if ref.get("not") else "")
+        + "</div>",
+        unsafe_allow_html=True,
+    )
+
+def kaynaklar_kutusu(anahtarlar, baslik="Kaynaklar", ek_not=None, acik=False):
+    """Verilen kaynak anahtarlari icin akademik 'Kaynaklar' bolumu (expander).
+    Tanimsiz anahtari sessizce atlar — asla uydurma kart cizmez."""
+    with st.expander(baslik, expanded=acik):
+        for k in anahtarlar:
+            ref = KAYNAKLAR.get(k)
+            if ref:
+                kaynak_karti(ref)
+        if ek_not:
+            st.caption(ek_not)

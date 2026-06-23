@@ -35,7 +35,7 @@ Nefron-Projesi/
 │   ├── veri_kontrol.py    <- Veri bütünlüğü denetçisi (yakınsama kontrolü)
 │   ├── pages/             <- 1 Segment · 2 Tüm Nefron · 3 Tipler · 4 Karşılaştırma
 │   │                         5 Doğrulamalar · 6 Veri Bütünlüğü
-│   │                         7 İnteraktif Anatomi (BETA) · 8 Klinik Senaryolar (BETA)
+│   │                         7 İnteraktif Anatomi (BETA) · 8 Klinik (eğitim arayüzü)
 │   └── d3_components/     <- nephron_diagram.html (D3.js anatomik şablon)
 ├── notlar/
 │   ├── gunluk.md      <- Kronolojik proje hikayesi (faz faz)

@@ -84,62 +84,36 @@ def _yuzde(yeni, baz):
     return 100.0 * (yeni - baz) / baz if baz else float("nan")
 
 
-def _vaka_karti_html(baslik, alt_baslik, renk, ikon):
-    """Vaka seçim kartı için HTML üretir."""
-    return (
-        f'<div style="border: 2px solid {renk}; border-radius: 10px; padding: 16px 18px; '
-        f'text-align: center; cursor: pointer; transition: all 0.2s;">'
-        f'<div style="font-size: 2rem; margin-bottom: 6px;">{ikon}</div>'
-        f'<div style="font-size: 1rem; font-weight: 700; color: #1f2937;">{baslik}</div>'
-        f'<div style="font-size: 0.78rem; color: #6b7280; margin-top: 4px;">{alt_baslik}</div>'
-        f'</div>'
-    )
-
-
 # ================================================================
-# VAKA SEÇİM KARTLARI
+# VAKA SEÇİM KARTLARI (BUTONLAR)
 # ================================================================
 st.markdown("### Klinik Vakalar")
 st.caption("Bir vaka secin — detayli mekanizma, ilac/doz ve model verileri acilir.")
 
-k1, k2, k3 = st.columns(3)
-with k1:
-    st.markdown(
-        _vaka_karti_html(
-            "SGLT2 Inhibisyonu",
-            "Gliflozinler ve TGF restorasyonu",
-            "#be185d", ""
-        ),
-        unsafe_allow_html=True,
-    )
-with k2:
-    st.markdown(
-        _vaka_karti_html(
-            "Diyabetik Hiperfiltrasyon",
-            "Tubuler hipotez ve erken hasar",
-            "#ea580c", ""
-        ),
-        unsafe_allow_html=True,
-    )
-with k3:
-    st.markdown(
-        _vaka_karti_html(
-            "Hipertansiyon",
-            "Basinc natriurezi mekanizmasi",
-            "#a16207", ""
-        ),
-        unsafe_allow_html=True,
-    )
+if "klinik_vaka" not in st.session_state:
+    st.session_state.klinik_vaka = "SGLT2"
 
-vaka = st.selectbox(
-    "Vaka secin",
-    [
-        "Vaka 1: SGLT2 Inhibisyonu (Gliflozinler) ve TGF Restorasyonu",
-        "Vaka 2: Diyabetik Hiperfiltrasyon ve Tubuler Hipotez",
-        "Vaka 3: Hipertansiyon ve Basinc Natriurezi",
-    ],
-    label_visibility="collapsed",
-)
+k1, k2, k3 = st.columns(3)
+
+with k1:
+    if st.button("🩸 SGLT2 Inhibisyonu", use_container_width=True, 
+                 type="primary" if st.session_state.klinik_vaka == "SGLT2" else "secondary"):
+        st.session_state.klinik_vaka = "SGLT2"
+        st.rerun()
+
+with k2:
+    if st.button("⚡ Diyabetik Hiperfiltrasyon", use_container_width=True, 
+                 type="primary" if st.session_state.klinik_vaka == "Hiperfiltrasyon" else "secondary"):
+        st.session_state.klinik_vaka = "Hiperfiltrasyon"
+        st.rerun()
+
+with k3:
+    if st.button("🫀 Hipertansiyon", use_container_width=True, 
+                 type="primary" if st.session_state.klinik_vaka == "Hipertansiyon" else "secondary"):
+        st.session_state.klinik_vaka = "Hipertansiyon"
+        st.rerun()
+
+vaka = st.session_state.klinik_vaka
 st.markdown("---")
 
 

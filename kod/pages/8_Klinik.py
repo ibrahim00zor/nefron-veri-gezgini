@@ -387,35 +387,42 @@ bunu "dusuk basinc" okur -> afferent arteriyol genisley -> GFR daha da artar (hi
 
     with t_ilac:
         st.markdown("""
-**Yaklasim baglami:** Bu vaka oncelikle bir **patofizyoloji** vakasidirr;
+**Yaklasim baglami:** Bu vaka oncelikle bir **patofizyoloji** vakasidir;
 hiperfiltrasyonun erken bir belirtec oldugunu anlamak klinik onlem icin kritiktir.
 
 **Ilac sinifi ve dozlar (egitim amacli, kaynakli):**
 
-| Yaklasim | Ilac ornekleri | Doz | Kaynak |
+| Yaklasim | Ilac ornekleri | Doz/Hedef | Kaynak |
 |---|---|---|---|
-| **SGLT2 inhibisyonu** | Empagliflozin | 10 mg/gun | KDIGO 2022; EMPA-KIDNEY 2023 |
-| | Dapagliflozin | 10 mg/gun | KDIGO 2022 |
+| **Yogun Insulin Tedavisi (1. Basamak)** | Bazal-bolus insulin | Bireysellestirilmis (HbA1c hedefi) | Standart Diyabet Kilavuzlari |
 | **RAS blokaji (albuminuri varsa)** | Enalapril | 10-20 mg/gun (titre et) | KDIGO 2021 BP; KDIGO 2022 |
 | | Losartan | 50-100 mg/gun (titre et) | KDIGO 2021 BP |
 | | Ramipril | 5-10 mg/gun (titre et) | KDIGO 2021 BP |
 
-**KDIGO 2022 onerileri:**
-- Tip 2 diyabet + KBH: SGLT2i, eGFR >=20 iken basla; eGFR dusse bile surdurebilirsin.
-- ACEi/ARB: albuminuri varsa baslat, **tolere edilen en yuksek onayli doza** titre et.
+**SGLT2 Inhibitorleri ve Tip 1 Diyabet Paradoksu:**
+SGLT2 inhibitorleri mekanistik olarak hiperfiltrasyonu duzeltse de, **Tip 1 Diyabette
+kullanimlari standart DEGILDIR** ve cogu kilavuzda (KDIGO 2022 dahil)
+**euglisemik diyabetik ketoasidoz (DKA) riskindeki ciddi artis** nedeniyle
+genellikle onerilmez veya kesinlikle off-label kabul edilir. KDIGO 2022'nin
+SGLT2i onerileri acikca **Tip 2 Diyabet** icindir. Tip 1 diyabette ana glisemik
+kontrol her zaman insulindir.
+
+**KDIGO 2022 ve Genel Oneriler:**
+- Tip 1 diyabette glisemik kontrol **insulin** temellidir.
+- ACEi/ARB: Tip 1 veya Tip 2 fark etmeksizin albuminuri varsa baslat,
+  **tolere edilen en yuksek onayli doza** titre et.
 - Basladiktan sonra **2-4 hafta icinde** kan basinci, kreatinin ve potasyum izle.
-- eGFR'de <%30 dusus fizyolojik kabul edilir; >%30 ise dozu azalt veya kes.
 - ACEi + ARB kombinasyonundan KACIN.
 
 **Erken diyabette ozel not:**
 Hiperfiltrasyon genc hastalarda genellikle asemptomatiktir. eGFR "normal" bile olsa,
 "yuksek-normal" deger (>130 mL/dk/1,73 m2) hiperfiltrasyon isareti olabilir.
-SGLT2i, TGF'yi yeniden etkinlestirerek bu hiperfiltrasyonu duzeltir.
         """)
         st.info(
-            "Bu doz bilgileri dogrulanmis kaynaklara dayanir ancak **klinisyen/hoca dogrulamasi "
-            "beklemektedir** ve egitim amaclidir — recete/doz karari icin guncel ilac etiketi ve "
-            "klinik degerlendirme gerekir."
+            "Bu vaka modeli (F_diab_mod) hiperfiltrasyon mekanizmasini (tubuler hipotez) gostermek "
+            "amaciyla tasarlanmistir. Ancak tedavide Tip 1 diyabet gercekligi goz onune alinmali, "
+            "insulinden sasmamali ve SGLT2i'lerin Tip 1'deki DKA riski unutulmamalidir. "
+            "(Klinisyen/hoca dogrulamasi beklemektedir.)"
         )
 
     with t_model:
